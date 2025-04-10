@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Container,
   TextField,
   Button,
   Typography,
@@ -9,6 +9,16 @@ import {
 } from '@mui/material';
 
 function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = () => {
+    console.log('Email:', email);
+    console.log('Şifre:', password);
+    navigate('/home');
+  };
+
   return (
     <Box
       sx={{
@@ -34,24 +44,26 @@ function Login() {
         }}
       >
         <Box display="flex" flexDirection="column" gap={2}>
-        <Typography
-          variant="h3"
-          align="center"
-          sx={{
-            fontFamily: 'Orbitron, sans-serif',
-            fontWeight: 'bold',
-            background: 'linear-gradient(90deg, #ff005c, #ffa700)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}
-        >
-          GameCenter
-        </Typography>
+          <Typography
+            variant="h3"
+            align="center"
+            sx={{
+              fontFamily: 'Orbitron, sans-serif',
+              fontWeight: 'bold',
+              background: 'linear-gradient(90deg, #ff005c, #ffa700)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            GameCenter
+          </Typography>
 
           <TextField
             label="Email"
             variant="outlined"
             fullWidth
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             InputProps={{ style: { color: 'white' } }}
             InputLabelProps={{ style: { color: '#ccc' } }}
           />
@@ -60,10 +72,12 @@ function Login() {
             type="password"
             variant="outlined"
             fullWidth
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             InputProps={{ style: { color: 'white' } }}
             InputLabelProps={{ style: { color: '#ccc' } }}
           />
-          <Button variant="contained" color="primary" fullWidth>
+          <Button variant="contained" color="primary" fullWidth onClick={handleLogin}>
             🎮 Giriş Yap
           </Button>
         </Box>

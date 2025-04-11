@@ -2,6 +2,9 @@ import React from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Typography, Button } from '@mui/material';
 import Navbar from '../components/Navbar';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 
 const dummyGameDetails = {
   'battle-quest': {
@@ -22,8 +25,16 @@ const dummyGameDetails = {
 };
 
 function GameDetail() {
+  const navigate = useNavigate();
   const { gameId } = useParams();
   const game = dummyGameDetails[gameId];
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (isLoggedIn !== 'true') {
+      navigate('/');
+    }
+  }, []);
+  
 
   if (!game) {
     return (
@@ -62,9 +73,11 @@ function GameDetail() {
         <Typography variant="body1" sx={{ fontSize: 18, textAlign: 'center', maxWidth: 800 }}>
           {game.description}
         </Typography>
-        <Button variant="contained" color="primary" size="large">
-          🎮 Oyna
+       
+        <Button variant="contained" color="primary" size="large" onClick={() => navigate('/lobby')}>
+        🎮 Oyna
         </Button>
+
       </Box>
     </>
   );

@@ -14,10 +14,21 @@ function Login() {
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    console.log('Email:', email);
-    console.log('Şifre:', password);
+    if (!isValidEmail(email)) {
+      alert("Lütfen geçerli bir email adresi giriniz.");
+      return;
+    }
+    
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('userEmail', email); 
     navigate('/home');
   };
+  const isValidEmail = (email) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+  
+  
+  
 
   return (
     <Box

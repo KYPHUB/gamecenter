@@ -10,6 +10,7 @@ import {
   Button,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const games = [
   {
@@ -28,6 +29,15 @@ const games = [
 
 function Home() {
   const navigate = useNavigate();
+ 
+  
+  useEffect(() => {
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (isLoggedIn !== 'true') {
+      navigate('/');
+    }
+  }, []);
+  
 
   return (
     <>

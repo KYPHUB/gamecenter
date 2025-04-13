@@ -21,6 +21,8 @@ function Login() {
     
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('userEmail', email); 
+    localStorage.setItem('user', JSON.stringify({ email }));
+
     navigate('/home');
   };
   const isValidEmail = (email) => {

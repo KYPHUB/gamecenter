@@ -1,12 +1,11 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, List, ListItem } from '@mui/material';
 import Navbar from '../components/Navbar';
 
 function LobbyDetail() {
   const { id } = useParams();
   const lobbies = JSON.parse(localStorage.getItem('lobbies')) || [];
-
   const lobby = lobbies[id];
 
   if (!lobby) {
@@ -34,12 +33,32 @@ function LobbyDetail() {
         <Typography variant="h3" gutterBottom sx={{ fontFamily: 'Orbitron, sans-serif' }}>
           {lobby.name}
         </Typography>
+
         <Typography variant="h6" gutterBottom>
           Süre: {lobby.duration}
         </Typography>
-        <Typography variant="h6">
+
+        <Typography variant="h6" gutterBottom>
           Oyuncu Sayısı: {lobby.players}
         </Typography>
+
+        <Typography variant="h6" gutterBottom>
+          Oluşturan: {lobby.createdBy}
+        </Typography>
+
+        <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+          Katılan Oyuncular:
+        </Typography>
+
+        {lobby.joinedUsers && lobby.joinedUsers.length > 0 ? (
+          <List>
+            {lobby.joinedUsers.map((user, index) => (
+              <ListItem key={index}>👤 {user}</ListItem>
+            ))}
+          </List>
+        ) : (
+          <Typography>Bu lobiye henüz kimse katılmadı.</Typography>
+        )}
       </Box>
     </>
   );

@@ -17,7 +17,10 @@ function Lobby() {
   const [lobbyName, setLobbyName] = useState('');
   const [duration, setDuration] = useState('');
   const [players, setPlayers] = useState('');
-  const [lobbies, setLobbies] = useState([]);
+  const [lobbies, setLobbies] = useState(() => {
+    const savedLobbies = localStorage.getItem('lobbies');
+    return savedLobbies ? JSON.parse(savedLobbies) : [];
+  });
   const navigate = useNavigate();
 
   const handleCreateLobby = () => {
@@ -31,18 +34,25 @@ function Lobby() {
       alert('⚠️ Lütfen tüm alanları eksiksiz ve geçerli şekilde doldurun. (Oyuncu sayısı 2-6 arası olmalı)');
       return;
     }
-
+  
+    const user = JSON.parse(localStorage.getItem('user'));
+    const username = user?.email?.split('@')[0];
+  
     const newLobby = {
       name: lobbyName,
-      duration: `${duration} dk`,
-      players: `${players} kişi`
+      duration: `${duration} dk`, 
+      players: `${players} kişi`,
+      createdBy: username,
+      joinedUsers: [username]
     };
-
-    setLobbies(prev => [...prev, newLobby]);
+  
+    const updatedLobbies = [...lobbies, newLobby];
+    setLobbies(updatedLobbies);
     setLobbyName('');
     setDuration('');
     setPlayers('');
   };
+  
 
   useEffect(() => {
     localStorage.setItem('lobbies', JSON.stringify(lobbies));
@@ -117,7 +127,30 @@ function Lobby() {
                     variant="contained"
                     color="success"
                     sx={{ fontWeight: 'bold', color: 'white', px: 3 }}
-                    onClick={() => navigate(`/lobby/${index}`)}
+                    onClick={() => {
+                      const user = JSON.parse(localStorage.getItem('user'));
+                      const username = user?.email?.split('@')[0];
+                    
+                      const updatedLobbies = [...lobbies];
+                      const lobbyToJoin = updatedLobbies[index];
+                    
+                    
+                      lobbyToJoin.joinedUsers = lobbyToJoin.joinedUsers || [];
+                    
+                      if (!lobbyToJoin.joinedUsers.includes(username)) {
+                        lobbyToJoin.joinedUsers.push(username);
+                        localStorage.setItem('lobbies', JSON.stringify(updatedLobbies));
+                        setLobbies(updatedLobbies);
+                        alert('✅ 🎉 Lobiye başarıyla katıldınız!');
+                      } else {
+                        alert('⚠️ Bu lobiye zaten katıldınız.');
+                      }
+                      
+                    
+                      navigate(`/lobby/${index}`);
+                    }}
+                    
+                    
                   >
                     🎮 Katıl
                   </Button>

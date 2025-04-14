@@ -118,6 +118,9 @@ function Lobby() {
         </Paper>
 
         <Typography variant="h5" gutterBottom>Lobiler</Typography>
+        <Typography variant="subtitle1" sx={{ mb: 2 }}>
+  Toplam Lobi: {lobbies.length}
+</Typography>
         <List>
           {lobbies.map((lobby, index) => (
             <React.Fragment key={index}>
@@ -140,7 +143,7 @@ function Lobby() {
                       if (!lobbyToJoin.joinedUsers.includes(username)) {
                         lobbyToJoin.joinedUsers.push(username);
                         localStorage.setItem('lobbies', JSON.stringify(updatedLobbies));
-                        setLobbies(updatedLobbies);
+                          setLobbies(updatedLobbies);
                         alert('✅ 🎉 Lobiye başarıyla katıldınız!');
                       } else {
                         alert('⚠️ Bu lobiye zaten katıldınız.');
@@ -157,13 +160,18 @@ function Lobby() {
                 }
               >
                 <ListItemText
-                  primary={lobby.name}
-                  secondary={
-                    <Typography sx={{ color: '#ccc' }}>
-                      Süre: {lobby.duration} | Oyuncu Sayısı: {lobby.players}
-                    </Typography>
-                  }
-                />
+                   primary={lobby.name}
+                   secondary={
+                     <>
+                       <Typography sx={{ color: '#ccc' }}>
+                         Süre: {lobby.duration} | Oyuncu Sayısı: {lobby.players}
+                       </Typography>
+                       <Typography variant="caption" sx={{ color: '#aaa' }}>
+                         Oluşturulma: {lobby.createdAt}
+                       </Typography>
+                     </>
+                   }
+                 />
               </ListItem>
               <Divider light />
             </React.Fragment>

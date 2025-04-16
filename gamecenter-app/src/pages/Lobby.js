@@ -119,8 +119,8 @@ function Lobby() {
 
         <Typography variant="h5" gutterBottom>Lobiler</Typography>
         <Typography variant="subtitle1" sx={{ mb: 2 }}>
-  Toplam Lobi: {lobbies.length}
-</Typography>
+        Toplam Lobi: {lobbies.length}
+        </Typography>
         <List>
           {lobbies.map((lobby, index) => (
             <React.Fragment key={index}>

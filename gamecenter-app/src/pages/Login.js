@@ -13,21 +13,36 @@ function Login() {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    if (!isValidEmail(email)) {
-      alert("Lütfen geçerli bir email adresi giriniz.");
+  const handleLogin = async () => {
+    if (!email) {
+      alert("⚠️ Lütfen e-posta girin.");
       return;
     }
-    
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('userEmail', email); 
-    localStorage.setItem('user', JSON.stringify({ email }));
-
-    navigate('/home');
+  
+    try {
+      const response = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include', 
+        body: JSON.stringify({ email })
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        navigate('/home');
+      } else {
+        alert("❌ Giriş başarısız: " + data.error);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert("❌ Sunucuya bağlanılamadı.");
+    }
   };
-  const isValidEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
+  
   
   
   

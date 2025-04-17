@@ -12,6 +12,8 @@ import {
 } from '@mui/material';
 import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
+import { formatDuration } from '../utils/formatTime';
+
 
 function Lobby() {
   const [lobbyName, setLobbyName] = useState('');
@@ -164,7 +166,7 @@ function Lobby() {
                    secondary={
                      <>
                        <Typography sx={{ color: '#ccc' }}>
-                         Süre: {lobby.duration} | Oyuncu Sayısı: {lobby.players}
+                       Süre: {formatDuration(parseInt(lobby.duration))} | Oyuncu Sayısı: {lobby.players}
                        </Typography>
                        <Typography variant="caption" sx={{ color: '#aaa' }}>
                          Oluşturulma: {lobby.createdAt}

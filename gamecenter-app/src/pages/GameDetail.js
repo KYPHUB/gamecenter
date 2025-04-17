@@ -28,6 +28,7 @@ function GameDetail() {
   const navigate = useNavigate();
   const { gameId } = useParams();
   const game = dummyGameDetails[gameId];
+  console.log(`🕹️ ${game?.title || 'Bilinmeyen'} detay sayfası yüklendi.`);
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
     if (isLoggedIn !== 'true') {

@@ -20,8 +20,7 @@ GameCenter, farklı oyunlara özel lobiler oluşturabileceğiniz, oyun detaylar�
 
 ## Geliştiriciler
 
-- [Adınız Soyadınız]
-- [Ekip arkadaşınız varsa buraya]
+- Kerem Yunus Parlakyiğit
 
 ## Kurulum
 

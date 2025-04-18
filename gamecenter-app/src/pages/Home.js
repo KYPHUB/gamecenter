@@ -1,108 +1,181 @@
-import React from 'react';
-import Navbar from '../components/Navbar';
-import {
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardMedia,
-  Box,
-  Button,
-} from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+  import React from 'react';
+  import Navbar from '../components/Navbar';
+  import {
+    Typography,
+    Grid,
+    Card,
+    CardContent,
+    CardMedia,
+    Box,
+    Button,
+  } from '@mui/material';
+  import { useNavigate } from 'react-router-dom';
+  import { useEffect } from 'react';
 
-const games = [
-  {
-    title: 'Battle Quest',
-    image: 'https://source.unsplash.com/random/400x200?game1',
-  },
-  {
-    title: 'Space Wars',
-    image: 'https://source.unsplash.com/random/400x200?space',
-  },
-  {
-    title: 'Pixel Runner',
-    image: 'https://source.unsplash.com/random/400x200?arcade',
-  },
-];
-
-function Home() {
-  const navigate = useNavigate();
- 
-  
-  useEffect(() => {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    if (isLoggedIn !== 'true') {
-      navigate('/');
+  const games = [
+    {
+      id: 'pixel-runner',
+      name: 'Pixel Runner',
+      image: '/images/pixel-runner.jpg',
+    },
+    {
+      id: 'galaxy-invaders',
+      name: 'Galaxy Invaders',
+      image: '/images/galaxy-invaders.jpg',
+    },
+    {
+      id: 'cyber-sprint',
+      name: 'Cyber Sprint',
+      image: '/images/cyber-sprint.jpg',
+    },
+    {
+      id: 'zombie-rush',
+      name: 'Zombie Rush',
+      image: '/images/zombie-rush.jpg',
+    },
+    {
+      id: 'space-blaster',
+      name: 'Space Blaster',
+      image: '/images/space-blaster.jpg',
+    },
+    {
+      id: 'ninja-escape',
+      name: 'Ninja Escape',
+      image: '/images/ninja-escape.jpg',
+    },
+    {
+      id: 'sky-surfer',
+      name: 'Sky Surfer',
+      image: '/images/sky-surfer.jpg',
+    },
+    {
+      id: 'alien-attack',
+      name: 'Alien Attack',
+      image: '/images/alien-attack.jpg',
+    },
+    {
+      id: 'night-racer',
+      name: 'Night Racer',
+      image: '/images/night-racer.jpg',
+    },
+    {
+      id: 'dragon-flight',
+      name: 'Dragon Flight',
+      image: '/images/dragon-flight.jpg',
+    },
+    {
+      id: 'city-defender',
+      name: 'City Defender',
+      image: '/images/city-defender.jpg',
+    },
+    {
+      id: 'tower-dash',
+      name: 'Tower Dash',
+      image: '/images/tower-dash.jpg',
     }
-  }, []);
-  
+  ];
 
-  return (
-    <>
-      <Navbar />
-      <Box
+
+
+  function Home() {
+    const navigate = useNavigate();
+  
+    
+    useEffect(() => {
+      const isLoggedIn = localStorage.getItem('isLoggedIn');
+      if (isLoggedIn !== 'true') {
+        navigate('/');
+      }
+    }, []);
+    
+
+    return (
+      <>
+        <Navbar />
+        <Box
+    sx={{
+      background: 'linear-gradient(to right, #0f2027, #203a43, #2c5364)',
+      minHeight: '100vh',
+      padding: 4,
+      color: 'white',
+    }}
+  >
+
+          <Typography
+            variant="h3"
+            align="center"
+            gutterBottom
+            sx={{
+              fontFamily: 'Orbitron, sans-serif',
+              fontWeight: 'bold',
+              background: 'linear-gradient(90deg, #00c9ff, #92fe9d)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              mb: 4,
+            }}
+          >
+            Oyunlar
+          </Typography>
+
+          <Grid container spacing={5} justifyContent="center">
+  {games.map((game, index) => (
+    <Grid item key={index}>
+      <Card
         sx={{
-          background: 'linear-gradient(to right, #141e30, #243b55)',
-          minHeight: '100vh',
-          padding: 4,
-          color: 'white',
+          width: 180,
+          height: 250,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between',
+          borderRadius: 3,
+          transition: 'transform 0.3s',
+          '&:hover': { transform: 'scale(1.03)' },
         }}
       >
-        <Typography
-          variant="h3"
-          align="center"
-          gutterBottom
-          sx={{
-            fontFamily: 'Orbitron, sans-serif',
-            fontWeight: 'bold',
-            background: 'linear-gradient(90deg, #00c9ff, #92fe9d)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            mb: 4,
-          }}
-        >
-          Oyunlar
-        </Typography>
+  <CardMedia
+    component="img"
+    image={game.image}
+    alt={game.name}
+    sx={{
+      width: '100%',
+      height: 140,
+      objectFit: 'cover'
+    }}
+  />
 
-        <Grid container spacing={3} justifyContent="center">
-          {games.map((game, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
-              <Card
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Typography
+                variant="h6"
+                align="center"
                 sx={{
-                  borderRadius: 3,
-                  transition: 'transform 0.3s',
-                  '&:hover': { transform: 'scale(1.03)' },
+                  fontWeight: 'bold',
+                  fontSize: '1.1rem',
+                  mb: 1,
+                  color: '#333',
                 }}
               >
-                <CardMedia
-                  component="img"
-                  height="160"
-                  image={game.image}
-                  alt={game.title}
-                />
-                <CardContent>
-                  <Typography variant="h6">{game.title}</Typography>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    sx={{ mt: 1 }}
-                    onClick={() =>
-                      navigate(`/game/${game.title.toLowerCase().replace(/\s+/g, '-')}`)
-                    }
-                  >
-                    Detaylar
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
+                {game.name}
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                onClick={() =>
+                  navigate(`/game/${game.id}`)
+                }
+              >
+                Detaylar
+              </Button>
+            </CardContent>
+          </Card>
         </Grid>
-      </Box>
-    </>
-  );
-}
+      ))}
+    </Grid>
+    
 
-export default Home;
+        </Box>
+      </>
+    );
+  }
+
+  export default Home;

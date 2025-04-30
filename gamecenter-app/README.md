@@ -1,70 +1,103 @@
-# Getting Started with Create React App
+# Oyun Merkezi
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Şirket etkinliklerinde veya personellerin oynayabileceği çeşitli oyunların listelendiği ve lobi sistemi üzerinden birlikte oynanabildiği bir Web / Mobile frontend platformudur. Bu depo, projenin frontend (React) ve backend (Node.js) kısımlarını içermektedir.
 
-## Available Scripts
+## Mevcut Özellikler
 
-In the project directory, you can run:
+*   **Kullanıcı Giriş/Çıkış:** E-posta ve şifre ile güvenli giriş yapma ve oturumu sonlandırma (Backend'de session tabanlı).
+*   **Backend Durum Kontrolü:** Frontend'in backend sunucusuna erişip erişemediğini gösteren durum bilgisi.
+*   **Oyun Listeleme:** Backend'den çekilen mevcut oyunların ana ekranda listelenmesi.
+*   **Aktif Lobi Listeleme:** Backend'den çekilen aktif lobilerin ana ekranda veya lobi sayfasında listelenmesi.
+*   **Yeni Lobi Oluşturma:** Kullanıcıların yeni bir oyun lobisi oluşturabilmesi (Lobi Adı, Oyun, Oyuncu Sayısı, Özel Durumu).
+*   **Lobi Detaylarını Görüntüleme:** Listelenen bir lobiye tıklandığında (veya "Katıl" butonuna basıldığında) lobi detaylarının gösterilmesi.
+*   **Oyun Detaylarını Görüntüleme:** Listelenen bir oyuna tıklandığında oyun detaylarının gösterilmesi.
+*   **Korunan Sayfalar (Protected Routes):** Ana ekran, lobi, oyun detayları gibi sayfalara erişim için kullanıcı girişi gerekliliği.
 
-### `npm start`
+## Kullanılan Teknolojiler
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Frontend (`gamecenter-app/`)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+*   **React (~v19):** Kullanıcı arayüzü kütüphanesi.
+*   **React Router DOM v6:** Sayfa yönlendirmeleri için.
+*   **Material UI (MUI) ~v7:** Hazır UI bileşenleri ve tema desteği için.
+    *   `@mui/material`
+    *   `@mui/icons-material` (İkonlar için)
+*   **Axios:** Backend API'sine HTTP istekleri yapmak için.
+*   **React Context API:** Global state yönetimi (kullanıcı oturum bilgisi vb.) için.
+*   **Create React App:** Proje iskeleti ve geliştirme araçları.
 
-### `npm test`
+### Backend (`packages/server/`)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+*   **Node.js:** Çalışma ortamı.
+*   **Express:** Web framework'ü (API oluşturmak için).
+*   **Express-Session:** Kullanıcı oturumlarını yönetmek için.
+*   **Memorystore:** Session verilerini geliştirme ortamında hafızada saklamak için.
+*   **Cors:** Frontend'den gelen isteklere izin vermek için.
+*   **Nodemon:** Geliştirme sırasında sunucuyu otomatik yeniden başlatmak için.
 
-### `npm run build`
+## Proje Yapısı
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Proje ana olarak iki kısımdan oluşmaktadır:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+*   `gamecenter-app/`: Frontend React uygulamasını içerir (UI, sayfalar, component'ler).
+*   `packages/server/`: Backend Node.js/Express API sunucusunu içerir (API endpoint'leri, session yönetimi, dummy data).
+    *(Not: Proje başlangıçta Lerna monorepo olarak düşünülmüş olabilir ancak mevcut yapıda frontend `packages` dışındadır.)*
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Kurulum
 
-### `npm run eject`
+Projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları takip edin:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+1.  **Node.js ve npm/yarn yükleyin:** Henüz yüklü değilse [Node.js](https://nodejs.org/) adresinden indirin (npm genellikle birlikte gelir).
+2.  **Depoyu klonlayın:**
+    ```bash
+    git clone https://github.com/KYPHUB/gamecenter.git
+    cd gamecenter
+    ```
+3.  **Backend bağımlılıklarını yükleyin:**
+    ```bash
+    cd packages/server
+    npm install
+    cd ../..
+    ```
+4.  **Frontend bağımlılıklarını yükleyin:**
+    ```bash
+    cd gamecenter-app
+    npm install
+    cd ..
+    ```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Projeyi Çalıştırma
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Kurulum tamamlandıktan sonra projeyi başlatmak için **iki ayrı terminal** açmanız gerekmektedir:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+1.  **Backend Sunucusunu Başlatma:**
+    ```bash
+    cd packages/server
+    npm start
+    ```
+    *Sunucu varsayılan olarak `http://localhost:3001` adresinde çalışacaktır.*
 
-## Learn More
+2.  **Frontend Uygulamasını Başlatma:**
+    ```bash
+    cd gamecenter-app
+    npm start
+    ```
+    *Uygulama varsayılan olarak `http://localhost:3000` adresinde açılacaktır.*
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+Tarayıcınızda `http://localhost:3000` adresine giderek uygulamayı görebilirsiniz.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+**Test Kullanıcısı:**
+*   E-posta: `test@test.com`
+*   Şifre: `password`
 
-### Code Splitting
+## Kullanılabilir Scriptler
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Frontend (`gamecenter-app` klasöründe)
 
-### Analyzing the Bundle Size
+*   `npm start`: Uygulamayı geliştirme modunda başlatır.
+*   `npm run build`: Uygulamayı üretim için `build` klasörüne derler.
+*   `npm test`: Testleri çalıştırır.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Backend (`packages/server` klasöründe)
 
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+*   `npm start`: Sunucuyu `nodemon` ile geliştirme modunda başlatır (dosya değişikliklerinde otomatik yeniden başlar).

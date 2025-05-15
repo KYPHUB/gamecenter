@@ -1,11 +1,10 @@
 {
-  "name": "root",
+  "name": "gamecenter-monorepo",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
-  "dependencies": {},
   "devDependencies": {
     "lerna": "^8.2.2"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ]
 }

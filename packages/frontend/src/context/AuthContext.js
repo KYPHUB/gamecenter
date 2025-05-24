@@ -11,6 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [tokenChecked, setTokenChecked] = useState(false);
 
+  
   useEffect(() => {
     const checkToken = async () => {
       const storedToken = localStorage.getItem('user_token');
@@ -37,6 +38,7 @@ export const AuthProvider = ({ children }) => {
 
     checkToken();
   }, []);
+  
 
   const login = async (email, password) => {
     setLoading(true);
@@ -50,6 +52,13 @@ export const AuthProvider = ({ children }) => {
 
       const token = res.data.token || sha256(email + TOKEN_SECRET).toString();
       localStorage.setItem('user_token', token);
+
+      if (localStorage.getItem('rememberMe') === 'true') {
+      localStorage.setItem('rememberedUser', JSON.stringify({
+      email,
+      token
+    }));
+}
 
       return res.data;
     } catch (err) {
@@ -73,6 +82,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
+   // localStorage.removeItem('rememberedUser');
   };
 
   const verifyToken = async () => {

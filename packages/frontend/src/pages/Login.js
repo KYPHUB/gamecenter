@@ -17,14 +17,16 @@ import {
 
 export default function Login() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { login, isLoading: authLoading } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [forgotMode, setForgotMode] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
-  const navigate = useNavigate();
-  const { login, isLoading: authLoading } = useAuth();
+  const [rememberedUser, setRememberedUser] = useState(null);
 
   useEffect(() => {
     if (sessionStorage.getItem('loginError') === '1') {
@@ -34,9 +36,44 @@ export default function Login() {
   }, []);
 
   useEffect(() => {
-    const saved = localStorage.getItem('rememberedEmail');
-    if (saved) { setEmail(saved); setRememberMe(true); }
+    const stored = localStorage.getItem('rememberedUser');
+    if (stored) {
+      try {
+        setRememberedUser(JSON.parse(stored));
+      } catch {
+        localStorage.removeItem('rememberedUser');
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('rememberedEmail');
+    if (saved) {
+      setEmail(saved);
+      setRememberMe(true);
+    }
+  }, []);
+
+  const handleQuickLogin = async () => {
+    if (!rememberedUser) return;
+    try {
+      const response = await axios.post('/api/token-verify', {
+        token: rememberedUser.token
+      }, { withCredentials: true });
+
+      if (response.data.success) {
+        navigate('/home', { replace: true });
+      } else {
+        setError('⚠️ Hızlı giriş başarısız oldu. Lütfen tekrar giriş yapın.');
+        localStorage.removeItem('rememberedUser');
+        setRememberedUser(null);
+      }
+    } catch (err) {
+      setError('⚠️ Otomatik giriş sırasında bir hata oluştu.');
+      localStorage.removeItem('rememberedUser');
+      setRememberedUser(null);
+    }
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -47,8 +84,10 @@ export default function Login() {
     }
 
     if (rememberMe) {
+      localStorage.setItem('rememberMe', 'true');
       localStorage.setItem('rememberedEmail', email);
     } else {
+      localStorage.removeItem('rememberMe');
       localStorage.removeItem('rememberedEmail');
     }
 
@@ -69,6 +108,7 @@ export default function Login() {
       );
     }
   };
+
 
   return (
     <Box
@@ -187,6 +227,7 @@ export default function Login() {
               }}
             />
           )}
+          
 
           {/* Beni Hatırla */}
           {!forgotMode && (
@@ -241,6 +282,23 @@ export default function Login() {
               ? '📨 ŞİFRE GÖNDER'
               : '🎮 GİRİŞ YAP'}
           </Button>
+          
+          {forgotMode && (
+          <Typography
+            onClick={() => setForgotMode(false)}
+            sx={{
+              mt: 1,
+              alignSelf: 'center',
+              background: 'linear-gradient(90deg, #80cbc4,rgb(62, 169, 151))',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              cursor: 'pointer',
+              fontWeight: 500
+            }}
+          >
+            🔙 Girişe dön
+          </Typography>
+        )}
 
           {/* Şifremi Unuttum */}
           <Typography
@@ -276,6 +334,38 @@ export default function Login() {
           />
         </Box>
       </Paper>
+
+      {/* Hızlı Giriş Butonu */}
+      {rememberedUser && (
+        <Box
+  sx={{
+    position: 'fixed',
+    bottom: 24,
+    right: 24,
+    backgroundColor: '#26a69a',
+    color: '#fff',
+    fontWeight: 600,
+    fontSize: 22,
+    width: 100,
+    height: 100,
+    borderRadius: 6, // 🔁 kavisli köşeler için
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
+    cursor: 'pointer',
+    zIndex: 9999,
+    transition: '0.3s',
+    '&:hover': {
+      backgroundColor: '#00796b'
+    }
+  }}
+  title={`Hızlı giriş: ${rememberedUser.email}`}
+  onClick={handleQuickLogin}
+>
+  {rememberedUser.email.charAt(0).toUpperCase()}
+</Box>
+      )}
     </Box>
   );
 }

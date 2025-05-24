@@ -1,4 +1,3 @@
-// Güncellenmiş Lobby.js
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, TextField, Button, Paper, List, ListItem, ListItemText,
@@ -14,7 +13,9 @@ import EventIcon from '@mui/icons-material/Event';
 
 function Lobby() {
   const navigate = useNavigate();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading, verifyToken } = useAuth();
+
+  const [tokenVerified, setTokenVerified] = useState(false);
 
   const [lobbies, setLobbies] = useState([]);
   const [loadingLobbies, setLoadingLobbies] = useState(true);
@@ -30,6 +31,19 @@ function Lobby() {
 
   const [maxPlayers, setMaxPlayers] = useState(6);
   const [isPrivate, setIsPrivate] = useState(false);
+
+  // Token kontrolü
+  useEffect(() => {
+    const check = async () => {
+      const valid = await verifyToken();
+      if (!valid) {
+        navigate('/login', { replace: true });
+      } else {
+        setTokenVerified(true);
+      }
+    };
+    check();
+  }, []);
 
   useEffect(() => {
     if (!isAuthLoading && user) {
@@ -98,6 +112,8 @@ function Lobby() {
       </>
     );
   }
+
+  if (!tokenVerified) return null;
 
   return (
     <>

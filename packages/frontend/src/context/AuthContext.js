@@ -1,87 +1,122 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
+import sha256 from 'crypto-js/sha256';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
+const TOKEN_SECRET = 'GameCenter2025!';
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [tokenChecked, setTokenChecked] = useState(false);
 
-    useEffect(() => {
-        const checkSession = async () => {
-            setError(null);
-            try {
-                const response = await axios.get('/api/session-check', {
-                    withCredentials: true,
-                });
-                if (response.data && response.data.user) {
-                    setUser(response.data.user);
-                    console.log("✅ Aktif session bulundu:", response.data.user);
-                } else {
-                    setUser(null);
-                }
-            } catch (error) {
-                console.error("❌ Session kontrol hatası:", error.message);
-                setError(error.response?.data?.message || 'Oturum kontrol edilemedi.');
-                setUser(null);
-            } finally {
-                setLoading(false);
-            }
-        };
+  useEffect(() => {
+    const checkToken = async () => {
+      const storedToken = localStorage.getItem('user_token');
+      if (!storedToken) {
+        setLoading(false);
+        setTokenChecked(true);
+        return;
+      }
 
-        checkSession();
-    }, []);
-
-    const login = async (email, password) => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await axios.post('/api/login', { email, password }, {
-                withCredentials: true,
-            });
-            setUser(response.data.user);
-            console.log("✅ Giriş başarılı:", response.data.user);
-            return response.data;
-        } catch (error) {
-            console.error("❌ Login hatası:", error.message);
-            setError(error.response?.data?.message || 'Giriş başarısız oldu.');
-            setUser(null);
-            throw error;
-        } finally {
-            setLoading(false);
+      try {
+        const res = await axios.post('/api/token-verify', { token: storedToken }, { withCredentials: true });
+        if (res.data.success) {
+          setUser(res.data.user);
+        } else {
+          localStorage.removeItem('user_token');
         }
+      } catch (err) {
+        localStorage.removeItem('user_token');
+      } finally {
+        setLoading(false);
+        setTokenChecked(true);
+      }
     };
 
-    const logout = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            await axios.post('/api/logout', {}, {
-                withCredentials: true,
-            });
-            setUser(null);
-            console.log("📤 Çıkış yapıldı.");
-        } catch (error) {
-            console.error("❌ Logout hatası:", error.message);
-            setError(error.response?.data?.message || 'Çıkış yapılamadı.');
-            setUser(null);
-        } finally {
-            setLoading(false);
-        }
-    };
+    checkToken();
+  }, []);
 
-    return (
-        <AuthContext.Provider value={{ user, setUser, login, logout, isLoading: loading, error }}>
-            {children}
-        </AuthContext.Provider>
-    );
+  const login = async (email, password) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await axios.post('/api/login', { email, password }, { withCredentials: true });
+
+      if (!res.data.success) throw new Error(res.data.message || 'Giriş başarısız oldu.');
+
+      setUser(res.data.user);
+
+      const token = res.data.token || sha256(email + TOKEN_SECRET).toString();
+      localStorage.setItem('user_token', token);
+
+      return res.data;
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+      setUser(null);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      await axios.post('/api/logout', {}, { withCredentials: true });
+      setUser(null);
+      localStorage.removeItem('user_token');
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Çıkış yapılamadı.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyToken = async () => {
+    const storedToken = localStorage.getItem('user_token');
+    if (!storedToken) {
+      setUser(null);
+      sessionStorage.setItem('loginError', '1');
+      return false;
+    }
+
+    try {
+      const res = await axios.post('/api/token-verify', { token: storedToken }, { withCredentials: true });
+      if (res.data.success) {
+        return true;
+      } else {
+        await logout();
+        return false;
+      }
+    } catch (err) {
+      await logout();
+      sessionStorage.setItem('loginError', '1');
+      return false;
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      login,
+      logout,
+      isLoading: loading,
+      verifyToken,
+      tokenChecked,
+      error
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

@@ -1,129 +1,63 @@
+// Gerekli modüller
+const crypto = require('crypto');
+const TOKEN_SECRET = 'GameCenter2025!';
 const express = require('express');
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
+const cors = require('cors');
 const session = require('express-session');
 const MemoryStore = require('memorystore')(session);
-const cors = require('cors');
-
 const app = express();
+
 const PORT = 5000;
 
-// Middleware: istek loglama
-app.use((req, res, next) => {
-  console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
-  next();
-});
-
-// CORS ayarı
-app.use(cors({
-  origin: ['http://localhost:3000'],
-  credentials: true
-}));
-
-app.use(bodyParser.json());
-app.use(cookieParser());
+// Middleware
+app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(session({
+  cookie: { maxAge: 86400000 },
+  store: new MemoryStore({ checkPeriod: 86400000 }),
   secret: 'gamecenter_secret',
   resave: false,
-  saveUninitialized: true,
-  store: new MemoryStore({ checkPeriod: 86400000 })
+  saveUninitialized: false
 }));
 
-// Giriş kontrolü için middleware
-function authMiddleware(req, res, next) {
-  if (req.session && req.session.user) {
-    next();
-  } else {
-    res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
-  }
-}
+// Dummy kullanıcı verisi
+const DUMMY_USER = {
+  email: 'test@test.com',
+  passwordHash: crypto.createHash('sha256').update('06Sh1854').digest('hex'),
+  id: '123',
+  name: 'Test Kullanıcısı'
+};
 
-// Bellek içi lobi ve oyun verileri
-let lobbies = [];
-
-const games = [
-  {
-    id: 'pixel-runner',
-    name: 'Pixel Runner',
-    description: 'Reflekslerini test etmeye hazır mısın? Pixel Runner, sonsuz bir koşu oyunudur...',
-    image: '/images/pixel-runner.jpg'
-  },
-  {
-    id: 'galaxy-invaders',
-    name: 'Galaxy Invaders',
-    description: 'Uzaylılar galaksiyi istila etti! Gemini güçlendir, yeni silahlar aç...',
-    image: '/images/galaxy-invaders.jpg'
-  },
-  {
-    id: 'cyber-sprint',
-    name: 'Cyber Sprint',
-    description: 'Cyberpunk şehrinde hız kesmeden ilerle. Dijital tuzaklardan kaç...',
-    image: '/images/cyber-sprint.jpg'
-  },
-  {
-    id: 'zombie-rush',
-    name: 'Zombie Rush',
-    description: 'Zombi kıyameti başladı! Kaynak topla, barınağını güçlendir...',
-    image: '/images/zombie-rush.jpg'
-  },
-  {
-    id: 'space-blaster',
-    name: 'Space Blaster',
-    description: 'Uzayın derinliklerinde düşman filosuna karşı tek başınasın...',
-    image: '/images/space-blaster.jpg'
-  },
-  {
-    id: 'ninja-escape',
-    name: 'Ninja Escape',
-    description: 'Bir tapınaktan kaçmakla görevli bir ninjasın...',
-    image: '/images/ninja-escape.jpg'
-  },
-  {
-    id: 'sky-surfer',
-    name: 'Sky Surfer',
-    description: 'Bulutların üstünde bir sörfçü olarak havada süzül...',
-    image: '/images/sky-surfer.jpg'
-  },
-  {
-    id: 'alien-attack',
-    name: 'Alien Attack',
-    description: 'Uzaylılar dünyaya saldırıyor! Şehirleri koru...',
-    image: '/images/alien-attack.jpg'
-  },
-  {
-    id: 'night-racer',
-    name: 'Night Racer',
-    description: 'Gece yarışları başladı! Neon ışıklarla dolu pistlerde drift yap...',
-    image: '/images/night-racer.jpg'
-  },
-  {
-    id: 'dragon-flight',
-    name: 'Dragon Flight',
-    description: 'Ejderhanla gökyüzüne hükmet! Düşman kalelerini yok et...',
-    image: '/images/dragon-flight.jpg'
-  },
-  {
-    id: 'city-defender',
-    name: 'City Defender',
-    description: 'Şehrin son savunma hattı sensin. Dronlara karşı savunma kur...',
-    image: '/images/city-defender.jpg'
-  },
-  {
-    id: 'tower-dash',
-    name: 'Tower Dash',
-    description: 'Yüksek bir kulede yukarı doğru zıplayarak ilerle...',
-    image: '/images/tower-dash.jpg'
-  }
+// Dummy oyun ve lobi verisi
+const allGames = [
+  { id: 'pixel-runner', name: 'Pixel Runner', image: '/images/pixel-runner.jpg', description: 'Reflekslerini test etmeye hazır mısın? Pixel Runner, sonsuz bir koşu oyunudur...' },
+  { id: 'galaxy-invaders', name: 'Galaxy Invaders', image: '/images/galaxy-invaders.jpg', description: 'Uzaylılar galaksiyi istila etti! Gemini güçlendir, yeni silahlar aç...' },
+  { id: 'cyber-sprint', name: 'Cyber Sprint', image: '/images/cyber-sprint.jpg', description: 'Cyberpunk şehrinde hız kesmeden ilerle. Dijital tuzaklardan kaç...' },
+  { id: 'zombie-rush', name: 'Zombie Rush', image: '/images/zombie-rush.jpg', description: 'Zombi kıyameti başladı! Kaynak topla, barınağını güçlendir...' },
+  { id: 'space-blaster', name: 'Space Blaster', image: '/images/space-blaster.jpg', description: 'Uzayın derinliklerinde düşman filosuna karşı tek başınasın...' },
+  { id: 'ninja-escape', name: 'Ninja Escape', image: '/images/ninja-escape.jpg', description: 'Bir tapınaktan kaçmakla görevli bir ninjasın...' },
+  { id: 'sky-surfer', name: 'Sky Surfer', image: '/images/sky-surfer.jpg', description: 'Bulutların üstünde bir sörfçü olarak havada süzül...' },
+  { id: 'alien-attack', name: 'Alien Attack', image: '/images/alien-attack.jpg', description: 'Uzaylılar dünyaya saldırıyor! Şehirleri koru...' },
+  { id: 'night-racer', name: 'Night Racer', image: '/images/night-racer.jpg', description: 'Gece yarışları başladı! Neon ışıklarla dolu pistlerde drift yap...' },
+  { id: 'dragon-flight', name: 'Dragon Flight', image: '/images/dragon-flight.jpg', description: 'Ejderhanla gökyüzüne hükmet! Düşman kalelerini yok et...' },
+  { id: 'city-defender', name: 'City Defender', image: '/images/city-defender.jpg', description: 'Şehrin son savunma hattı sensin. Dronlara karşı savunma kur...' },
+  { id: 'tower-dash', name: 'Tower Dash', image: '/images/tower-dash.jpg', description: 'Yüksek bir kulede yukarı doğru zıplayarak ilerle...' }
 ];
 
-// ----------- ROUTES ----------- //
+const dummyLobbies = [];
 
-// Sağlık kontrolü
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+// Auth middleware
+function authMiddleware(req, res, next) {
+  if (req.session && req.session.user) return next();
+  res.status(401).json({ message: 'Giriş gerekli.' });
+}
+
+// API Endpointleri
+app.get('/api/status', (req, res) => {
+  res.status(200).json({ status: 'OK' });
 });
 
-// Session kontrolü
 app.get('/api/session-check', (req, res) => {
   if (req.session && req.session.user) {
     res.json({ loggedIn: true, user: req.session.user });
@@ -132,91 +66,102 @@ app.get('/api/session-check', (req, res) => {
   }
 });
 
-// Backend canlı mı?
-app.get('/api/status', (req, res) => {
-  res.json({ status: 'Backend çalışıyor' });
-});
-
-// Giriş
 app.post('/api/login', (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'E-posta gerekli.' });
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Email ve şifre gerekli.' });
   }
 
-  const user = { email };
-  req.session.user = user;
+  const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
 
-  res.json({ message: 'Giriş başarılı', user });
+  if (email === DUMMY_USER.email && hashedPassword === DUMMY_USER.passwordHash) {
+    const token = crypto.createHash('sha256').update(email + TOKEN_SECRET).digest('hex');
+
+    req.session.user = {
+      email: DUMMY_USER.email,
+      id: DUMMY_USER.id,
+      name: DUMMY_USER.name
+    };
+
+    res.json({ success: true, user: req.session.user, token });
+  } else {
+    res.status(401).json({ success: false, message: 'Geçersiz e-posta veya şifre.' });
+  }
+});
+  
+ app.post('/api/token-verify', (req, res) => {
+  const { token } = req.body;
+  const expectedToken = crypto.createHash('sha256').update(DUMMY_USER.email + TOKEN_SECRET).digest('hex');
+
+  if (token === expectedToken) {
+    req.session.user = {
+      email: DUMMY_USER.email,
+      id: DUMMY_USER.id,
+      name: DUMMY_USER.name
+    };
+    return res.json({ success: true, user: req.session.user });
+  }
+
+  res.status(401).json({ success: false, message: 'Geçersiz token.' });
 });
 
-// Çıkış
+
 app.post('/api/logout', (req, res) => {
   if (req.session) {
     req.session.destroy(err => {
-      if (err) {
-        console.error('Session destroy error:', err);
-        return res.status(500).json({ error: 'Çıkış yapılamadı.' });
-      }
+      if (err) return res.status(500).json({ message: 'Çıkış yapılamadı.' });
       res.clearCookie('connect.sid');
       res.json({ message: 'Çıkış başarılı' });
     });
   } else {
-    res.status(400).json({ error: 'Aktif oturum yok.' });
+    res.status(400).json({ message: 'Aktif oturum yok.' });
   }
 });
 
-// Tüm lobileri getir
-app.get('/api/lobbies', (req, res) => {
-  res.json({ lobbies });
+app.get('/api/games', authMiddleware, (req, res) => {
+  res.json(allGames);
 });
 
-// Belirli lobi getir
-app.get('/api/lobbies/:id', (req, res) => {
-  const lobbyId = parseInt(req.params.id);
-  const lobby = lobbies.find(l => l.id === lobbyId);
-  if (!lobby) {
-    return res.status(404).json({ error: 'Lobi bulunamadı.' });
-  }
-  res.json({ lobby });
+app.get('/api/games/:id', authMiddleware, (req, res) => {
+  const game = allGames.find(g => g.id === req.params.id);
+  if (game) res.json(game);
+  else res.status(404).json({ message: 'Oyun bulunamadı' });
 });
 
-// Yeni lobi oluştur
+app.get('/api/lobbies', authMiddleware, (req, res) => {
+  res.json(dummyLobbies);
+});
+
+app.get('/api/lobbies/:id', authMiddleware, (req, res) => {
+  const lobby = dummyLobbies.find(l => l.id === req.params.id);
+  if (lobby) res.json(lobby);
+  else res.status(404).json({ message: 'Lobi bulunamadı' });
+});
+
 app.post('/api/lobbies', authMiddleware, (req, res) => {
-  const { name, duration, players, createdBy } = req.body;
-  if (!name || !duration || !players || !createdBy) {
-    return res.status(400).json({ error: 'Eksik bilgi gönderildi.' });
-  }
+  const { lobbyName, gameId, maxPlayers, isPrivate } = req.body;
+  if (!lobbyName || !gameId) return res.status(400).json({ message: 'Eksik bilgi' });
+
+  const game = allGames.find(g => g.id === gameId);
+  if (!game) return res.status(400).json({ message: 'Geçersiz oyun' });
 
   const newLobby = {
-    id: Date.now(),
-    name,
-    duration,
-    players,
-    createdBy,
-    joinedUsers: [createdBy]
+    id: `lobby-${Date.now()}`,
+    name: lobbyName,
+    game: game.name,
+    gameId,
+    currentPlayers: 1,
+    maxPlayers: Math.min(Math.max(parseInt(maxPlayers) || 6, 2), 10),
+    isPrivate: !!isPrivate,
+    isEvent: false,
+    createdBy: req.session.user.email,
+    createdAt: new Date()
   };
 
-  lobbies.push(newLobby);
-  res.status(201).json({ message: 'Lobi oluşturuldu', lobby: newLobby });
+  dummyLobbies.unshift(newLobby);
+  res.status(201).json({ success: true, lobby: newLobby });
 });
 
-// Tüm oyunları getir
-app.get('/api/games', (req, res) => {
-  res.json(games);
-});
-
-// Tekil oyun bilgisi
-app.get('/api/games/:id', (req, res) => {
-  const game = games.find(g => g.id === req.params.id);
-  if (game) {
-    res.json(game);
-  } else {
-    res.status(404).json({ error: 'Oyun bulunamadı' });
-  }
-});
-
-// Sunucuyu başlat
 app.listen(PORT, () => {
-  console.log(`Backend API listening at http://localhost:${PORT}`);
+  console.log(`Backend http://localhost:${PORT} üzerinde çalışıyor.`);
 });

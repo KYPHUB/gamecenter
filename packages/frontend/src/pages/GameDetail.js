@@ -3,14 +3,30 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, CircularProgress, Alert } from '@mui/material';
 import Navbar from '../components/Navbar';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 function GameDetail() {
   const { gameId } = useParams();
   const navigate = useNavigate();
+  const { verifyToken } = useAuth();
 
+  const [tokenVerified, setTokenVerified] = useState(false);
   const [game, setGame] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Token doğrulama
+  useEffect(() => {
+    const check = async () => {
+      const valid = await verifyToken();
+      if (!valid) {
+        navigate('/login', { replace: true });
+      } else {
+        setTokenVerified(true);
+      }
+    };
+    check();
+  }, []);
 
   useEffect(() => {
     const fetchGame = async () => {
@@ -53,6 +69,8 @@ function GameDetail() {
       </>
     );
   }
+
+  if (!tokenVerified) return null;
 
   return (
     <>

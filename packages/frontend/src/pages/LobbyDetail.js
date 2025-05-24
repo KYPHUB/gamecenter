@@ -11,12 +11,25 @@ import { useAuth } from '../context/AuthContext';
 function LobbyDetail() {
   const { id: lobbyId } = useParams();
   const navigate = useNavigate();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading, verifyToken } = useAuth();
 
+  const [tokenVerified, setTokenVerified] = useState(false);
   const [lobby, setLobby] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [availableGames, setAvailableGames] = useState([]);
+
+  useEffect(() => {
+    const check = async () => {
+      const valid = await verifyToken();
+      if (!valid) {
+        navigate('/login', { replace: true });
+      } else {
+        setTokenVerified(true);
+      }
+    };
+    check();
+  }, []);
 
   useEffect(() => {
     if (!isAuthLoading && user && lobbyId) {
@@ -74,6 +87,8 @@ function LobbyDetail() {
       </>
     );
   }
+
+  if (!tokenVerified) return null;
 
   return (
     <>

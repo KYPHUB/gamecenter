@@ -18,8 +18,7 @@ import {
 export default function Login() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { login, isLoading: authLoading } = useAuth();
-
+  const { login, logout, isLoading: authLoading, verifyToken } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -27,6 +26,7 @@ export default function Login() {
   const [forgotMode, setForgotMode] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [rememberedUser, setRememberedUser] = useState(null);
+
 
   useEffect(() => {
     if (sessionStorage.getItem('loginError') === '1') {
@@ -53,27 +53,33 @@ export default function Login() {
       setRememberMe(true);
     }
   }, []);
+  
 
   const handleQuickLogin = async () => {
-    if (!rememberedUser) return;
-    try {
-      const response = await axios.post('/api/token-verify', {
-        token: rememberedUser.token
-      }, { withCredentials: true });
+  if (!rememberedUser) return;
+  try {
+    const response = await axios.post('/api/token-verify', {
+      token: rememberedUser.token
+    }, { withCredentials: true });
 
-      if (response.data.success) {
-        navigate('/home', { replace: true });
-      } else {
-        setError('⚠️ Hızlı giriş başarısız oldu. Lütfen tekrar giriş yapın.');
-        localStorage.removeItem('rememberedUser');
-        setRememberedUser(null);
-      }
-    } catch (err) {
-      setError('⚠️ Otomatik giriş sırasında bir hata oluştu.');
+    if (response.data.success) {
+      // Kullanıcıyı tanıt (elle oturumu başlat)
+      localStorage.setItem('user_token', rememberedUser.token);
+
+      // ✅ Kullanıcıyı set etmek için logout → ardından token zaten kontrol edilecek
+      window.location.href = '/home'; // Hard redirect ile tüm context tetiklenir
+    } else {
+      setError('⚠️ Hızlı giriş başarısız oldu. Lütfen tekrar giriş yapın.');
       localStorage.removeItem('rememberedUser');
       setRememberedUser(null);
     }
-  };
+  } catch (err) {
+    setError('⚠️ Otomatik giriş sırasında hata oluştu.');
+    localStorage.removeItem('rememberedUser');
+    setRememberedUser(null);
+  }
+};
+
 
   const handleSubmit = async e => {
     e.preventDefault();

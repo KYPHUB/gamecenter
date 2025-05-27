@@ -7,6 +7,7 @@ import {
 import Navbar from '../components/Navbar';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import Countdown from '../components/Countdown';
 
 function LobbyDetail() {
   const { id: lobbyId } = useParams();
@@ -18,6 +19,7 @@ function LobbyDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [availableGames, setAvailableGames] = useState([]);
+  const [isInLobby, setIsInLobby] = useState(false);
 
   useEffect(() => {
     const check = async () => {
@@ -30,7 +32,6 @@ function LobbyDetail() {
     };
     check();
   }, []);
-
   useEffect(() => {
     if (!isAuthLoading && user && lobbyId) {
       const fetchData = async () => {
@@ -42,6 +43,7 @@ function LobbyDetail() {
           ]);
           setLobby(lobbyRes.data);
           setAvailableGames(gamesRes.data);
+          setIsInLobby(lobbyRes.data.participants?.includes(user.email));
         } catch (err) {
           console.error("Lobi detayı alınamadı:", err.message);
           setError('Lobi bilgisi yüklenemedi.');
@@ -60,6 +62,33 @@ function LobbyDetail() {
     return availableGames.find(g => g.id === gameId)?.name || gameId;
   };
 
+  const joinLobby = async () => {
+    try {
+      await axios.post(`/api/lobbies/${lobbyId}/join`, {}, { withCredentials: true });
+      setIsInLobby(true);
+      setLobby(prev => ({
+        ...prev,
+        participants: [...(prev.participants || []), user.email],
+        currentPlayers: prev.currentPlayers + 1,
+      }));
+    } catch {
+      alert('Lobiye katılamadın');
+    }
+  };
+
+  const leaveLobby = async () => {
+    try {
+      await axios.post(`/api/lobbies/${lobbyId}/leave`, {}, { withCredentials: true });
+      setIsInLobby(false);
+      setLobby(prev => ({
+        ...prev,
+        participants: (prev.participants || []).filter(p => p !== user.email),
+        currentPlayers: Math.max(0, (prev.participants?.length || 1) - 1),
+      }));
+    } catch {
+      alert('Lobiden ayrılamadın');
+    }
+  };
   if (loading || isAuthLoading) {
     return (
       <>
@@ -90,6 +119,15 @@ function LobbyDetail() {
 
   if (!tokenVerified) return null;
 
+  const currentUser = user?.email || '';
+  const isOwner = currentUser === lobby.createdBy;
+  const username = currentUser.split('@')[0];
+  const participants = lobby.participants || [];
+
+  const otherParticipants = participants.filter(p => p !== lobby.createdBy);
+  const showLeave = participants.includes(currentUser);
+  const showJoin = !participants.includes(currentUser) && !isOwner;
+
   return (
     <>
       <Navbar />
@@ -115,29 +153,48 @@ function LobbyDetail() {
           </Grid>
           <Grid item xs={12} sm={6}>
             <Typography variant="h6">Durum:</Typography>
-            <Typography>{lobby.isPrivate ? '🔒 Özel Lobi' : 'Herkese Açık'}{lobby.isEvent ? ' ✨ (Etkinlik Lobisi)' : ''}</Typography>
+            <Typography>
+              {lobby.isPrivate ? '🔒 Özel Lobi' : 'Herkese Açık'}
+              {lobby.isEvent ? ' 📅 (Etkinlik Lobisi)' : ''}
+            </Typography>
           </Grid>
           {lobby.isEvent && lobby.eventEndTime && (
             <Grid item xs={12}>
-              <Typography variant="h6">Etkinlik Bitiş:</Typography>
-              <Typography>{new Date(lobby.eventEndTime).toLocaleString('tr-TR')}</Typography>
+              <Typography variant="h6">Etkinliğin Bitmesine Kalan Süre:</Typography>
+              <Countdown target={lobby.eventEndTime} />
             </Grid>
           )}
         </Grid>
 
-        <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-          Katılan Oyuncular:
-        </Typography>
+        <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>Kurucu:</Typography>
+        <Typography sx={{ mb: 2 }}>👑 {lobby.createdBy.split('@')[0]}</Typography>
+
+        <Typography variant="h6" gutterBottom>Katılımcılar:</Typography>
         <List sx={{ bgcolor: 'rgba(0, 0, 0, 0.2)', borderRadius: 1 }}>
-          <ListItem><ListItemText primary="Oyuncu 1 (Siz)" /></ListItem>
-          <ListItem><ListItemText primary="Oyuncu 2" /></ListItem>
-          {lobby.currentPlayers > 2 && (
-            <ListItem><ListItemText primary={`... ve ${lobby.currentPlayers - 2} diğer oyuncu`} /></ListItem>
+          {participants.includes(lobby.createdBy) && (
+            <ListItem><ListItemText primary={lobby.createdBy.split('@')[0]} /></ListItem>
           )}
-          {lobby.currentPlayers === 0 && (
-            <ListItem><ListItemText primary="Henüz katılan yok." /></ListItem>
-          )}
+          {otherParticipants.length > 0 ? (
+            otherParticipants.map((p, i) => (
+              <ListItem key={i}><ListItemText primary={p.split('@')[0]} /></ListItem>
+            ))
+          ) : !participants.includes(lobby.createdBy) ? (
+            <ListItem><ListItemText primary="Başka katılımcı yok." /></ListItem>
+          ) : null}
         </List>
+
+        <Box sx={{ mt: 4, textAlign: 'center' }}>
+          {showJoin && (
+            <Button variant="contained" color="primary" onClick={joinLobby}>
+              ✅ Lobiye Katıl
+            </Button>
+          )}
+          {showLeave && (
+            <Button variant="outlined" color="error" onClick={leaveLobby}>
+              ❌ Lobiden Ayrıl
+            </Button>
+          )}
+        </Box>
 
         <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
           <Button variant="contained" size="large" color="success">
@@ -150,3 +207,5 @@ function LobbyDetail() {
 }
 
 export default LobbyDetail;
+
+

@@ -160,9 +160,9 @@ function Home() {
                     }}
                   >
                     <CardMedia
-                      component="img"
-                      image={game.image || '/placeholder.png'}
-                      alt={game.name}
+                    component="img"
+                    image={`http://localhost:5000${game.image}`}
+                    alt={game.name} 
                       sx={{ height: 140, objectFit: 'cover' }}
                     />
                     <CardContent sx={{ flexGrow: 1, p: 2, display: 'flex', flexDirection: 'column' }}>

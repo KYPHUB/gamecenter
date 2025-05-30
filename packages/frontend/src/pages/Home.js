@@ -12,14 +12,20 @@ import {
   Button,
   CircularProgress,
   Alert,
-  List, ListItem, ListItemText,
+  List,
+  ListItem,
+  ListItemText,
   Divider,
-  IconButton
+  IconButton,
+  TextField,
+  Snackbar
 } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
 import EventIcon from '@mui/icons-material/Event';
 import { useNavigate } from 'react-router-dom';
 import Countdown from '../components/Countdown';
+
+
 
 function Home() {
   const navigate = useNavigate();
@@ -31,10 +37,15 @@ function Home() {
   const [error, setError] = useState(null);
   const [tokenChecked, setTokenChecked] = useState(false);
 
-  // 👇 Kapanmış lobileri gizle
+  const [lobbyLink, setLobbyLink] = useState("");
+  const [snackOpen, setSnackOpen] = useState(false);
+
+
+
+  //  Kapanmış lobileri gizle
   const visibleLobbies = lobbies.filter(l => !l.status || l.status !== 'closed');
 
-  // 👇 24 saatten kısa süre kalan etkinlikler için sayaç göstermek
+  //  24 saatten kısa süre kalan etkinlikler için sayaç göstermek
   const isEventSoon = (startDate) => {
     const now = new Date();
     const eventTime = new Date(startDate);
@@ -42,7 +53,24 @@ function Home() {
     return diff <= 24 * 60 * 60 * 1000;
   };
 
-  // 🔐 Oturum kontrolü
+const handleGoToLobby = () => {
+  try {
+    const url = new URL(lobbyLink);
+    const parts = url.pathname.split('/');
+    const lobbyId = parts[parts.length - 1];
+
+    if (!lobbyId || !lobbyId.startsWith('lobby-')) {
+      throw new Error();
+    }
+
+    navigate(`/lobby/${lobbyId}`);
+  } catch {
+    setSnackOpen(true);
+  }
+};
+
+
+  // Oturum kontrolü
   useEffect(() => {
     const check = async () => {
       const valid = await verifyToken();
@@ -55,7 +83,7 @@ function Home() {
     check();
   }, []);
 
-  // 🔄 Oyun ve Lobi verilerini çek
+  //  Oyun ve Lobi verilerini çek
   useEffect(() => {
     if (!isAuthLoading && user) {
       const fetchData = async () => {
@@ -84,7 +112,7 @@ function Home() {
     }
   }, [user, isAuthLoading, navigate]);
 
-  // ⏩ Yeni lobi oluşturma yönlendirmesi
+  //  Yeni lobi oluşturma yönlendirmesi
   const handleNewLobbyClick = () => {
     navigate('/lobby');
   };
@@ -111,20 +139,56 @@ function Home() {
         color: 'white',
       }}
     >
+      {/* Lobi Linki Yapıştırma Alanı */}
+      <Box sx={{
+        mb: 4,
+        p: 3,
+        borderRadius: 3,
+        background: 'rgba(255,255,255,0.05)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        gap: 2,
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <TextField
+          label="Lobi Linki Yapıştır"
+          variant="outlined"
+          fullWidth
+          value={lobbyLink}
+          onChange={(e) => setLobbyLink(e.target.value)}
+          InputProps={{ sx: { borderRadius: 3, color: 'white' } }}
+          InputLabelProps={{ sx: { color: '#b0bec5' } }}
+        />
+        <Button
+          onClick={handleGoToLobby}
+          variant="contained"
+          sx={{ borderRadius: 3, px: 4 }}
+        >
+          Git
+        </Button>
+      </Box>
+      <Snackbar
+        open={snackOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackOpen(false)}
+        message="Geçersiz bağlantı"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
+
       {error && (
         <Alert severity="warning" sx={{ mb: 3, bgcolor: 'rgba(255, 179, 0, 0.1)', color: '#ffb300' }}>
           {error}
         </Alert>
       )}
 
-      {loadingData && (
+      {loadingData ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
           <CircularProgress color="inherit" />
           <Typography sx={{ ml: 2 }}>Oyunlar ve Lobiler yükleniyor...</Typography>
         </Box>
-      )}
-
-      {!loadingData && !error && (
+      ) : (
         <>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4, borderBottom: '1px solid rgba(255, 255, 255, 0.2)', pb: 2 }}>
             <Typography variant="h4" sx={{ fontFamily: 'Orbitron, sans-serif', fontWeight: 'bold' }}>
@@ -141,7 +205,7 @@ function Home() {
             </Button>
           </Box>
 
-          {/* Oyunlar Bölümü */}
+          {/*  Oyunlar */}
           <Typography variant="h5" gutterBottom sx={{ fontFamily: 'Orbitron, sans-serif', mb: 2, color:'#92fe9d' }}>
             Oyunlar
           </Typography>
@@ -160,9 +224,9 @@ function Home() {
                     }}
                   >
                     <CardMedia
-                    component="img"
-                    image={`http://localhost:5000${game.image}`}
-                    alt={game.name} 
+                      component="img"
+                      image={`http://localhost:5000${game.image}`}
+                      alt={game.name}
                       sx={{ height: 140, objectFit: 'cover' }}
                     />
                     <CardContent sx={{ flexGrow: 1, p: 2, display: 'flex', flexDirection: 'column' }}>
@@ -188,7 +252,7 @@ function Home() {
 
           <Divider sx={{ my: 4, borderColor: 'rgba(255, 255, 255, 0.3)' }} />
 
-          {/* Aktif Lobiler Bölümü */}
+          {/*  Aktif Lobiler */}
           <Typography variant="h5" gutterBottom sx={{ fontFamily: 'Orbitron, sans-serif', mb: 2, color:'#ffa700' }}>
             Aktif Lobiler
           </Typography>
@@ -243,4 +307,5 @@ function Home() {
   </>
 );
 }
-export default Home;
+
+export default Home 

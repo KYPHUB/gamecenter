@@ -8,6 +8,9 @@ import Navbar from '../components/Navbar';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import Countdown from '../components/Countdown';
+import { Snackbar, IconButton } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+
 
 function LobbyDetail() {
   const { id: lobbyId } = useParams();
@@ -20,6 +23,24 @@ function LobbyDetail() {
   const [error, setError] = useState(null);
   const [availableGames, setAvailableGames] = useState([]);
   const [isInLobby, setIsInLobby] = useState(false);
+
+  const [passwordInput, setPasswordInput] = useState("");
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [joinError, setJoinError] = useState("");
+
+  const [copySuccess, setCopySuccess] = useState(false);
+
+
+
+
+  const handleCopyLink = () => {
+  const url = `${window.location.origin}/lobby/${lobby.id}`;
+  navigator.clipboard.writeText(url)
+    .then(() => setCopySuccess(true))
+    .catch(() => alert('Bağlantı kopyalanamadı'));
+};
+
+
 
   useEffect(() => {
     const check = async () => {
@@ -64,18 +85,31 @@ function LobbyDetail() {
   };
 
   const joinLobby = async () => {
-    try {
-      await axios.post(`/api/lobbies/${lobbyId}/join`, {}, { withCredentials: true });
-      setIsInLobby(true);
-      setLobby(prev => ({
-        ...prev,
-        participants: [...(prev.participants || []), user.email],
-        currentPlayers: prev.currentPlayers + 1,
-      }));
-    } catch {
-      alert('Lobiye katılamadın');
-    }
-  };
+  setJoinError("");
+
+  if (lobby.isPrivate && !passwordInput.trim()) {
+    return setJoinError("Şifre gereklidir.");
+  }
+
+  try {
+    await axios.post(
+      `/api/lobbies/${lobbyId}/join`,
+      lobby.isPrivate ? { password: passwordInput.trim() } : {},
+      { withCredentials: true }
+    );
+    setIsInLobby(true);
+    setLobby(prev => ({
+      ...prev,
+      participants: [...(prev.participants || []), user.email],
+      currentPlayers: prev.currentPlayers + 1,
+    }));
+    setShowPasswordPrompt(false);
+    setPasswordInput("");
+  } catch (err) {
+    setJoinError("Katılım başarısız. Şifre yanlış olabilir.");
+  }
+};
+
 
   const leaveLobby = async () => {
   try {
@@ -165,6 +199,28 @@ const expireTime = lobby.creatorLeftAt
       <Typography variant="h5" gutterBottom sx={{ color: '#ccc', mb: 4 }}>
         Oyun: {getGameName(lobby.game)}
       </Typography>
+      <Box sx={{ mt: 4, p: 2, borderRadius: 2, background: 'rgba(255,255,255,0.05)' }}>
+  <Typography sx={{ mb: 1, fontWeight: 'bold' }}>
+    🔗 Lobi Bağlantısı:
+  </Typography>
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    <Typography sx={{ wordBreak: 'break-all', color: '#90caf9' }}>
+      {`${window.location.origin}/lobby/${lobby.id}`}
+    </Typography>
+    <IconButton onClick={handleCopyLink} color="primary">
+      <ContentCopyIcon />
+    </IconButton>
+  </Box>
+</Box>
+
+<Snackbar
+  open={copySuccess}
+  autoHideDuration={3000}
+  onClose={() => setCopySuccess(false)}
+  message="Bağlantı kopyalandı!"
+  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+/>
+
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6}>
@@ -178,6 +234,8 @@ const expireTime = lobby.creatorLeftAt
             {lobby.isEvent ? ' 📅 (Etkinlik Lobisi)' : ''}
           </Typography>
         </Grid>
+
+        
 
         {lobby.isEvent && lobby.eventEndTime && (
           <Grid item xs={12}>
@@ -214,17 +272,72 @@ const expireTime = lobby.creatorLeftAt
       )}
 
       <Box sx={{ mt: 4, textAlign: 'center', display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
-        {showJoin && (
-          <Button variant="contained" color="primary" onClick={joinLobby}>
-            ✅ Lobiye Katıl
-          </Button>
+  {showJoin && (
+    lobby.isPrivate ? (
+      <Box
+        sx={{
+          p: 3,
+          borderRadius: 3,
+          bgcolor: 'rgba(255,255,255,0.05)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 2,
+          maxWidth: 400,
+          width: '100%',
+        }}
+      >
+        <Typography variant="h6" sx={{ color: '#ffa700' }}>
+          🔒 Bu lobiye katılmak için şifre gerekli
+        </Typography>
+
+        <Box sx={{ width: '100%' }}>
+          <input
+            type="password"
+            value={passwordInput}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            placeholder="Lobi Şifresi"
+            style={{
+              width: '100%',
+              padding: '12px',
+              fontSize: '16px',
+              borderRadius: '8px',
+              border: '1px solid #ccc',
+              backgroundColor: '#f5f5f5',
+              color: '#333',
+            }}
+          />
+        </Box>
+
+        {joinError && (
+          <Typography color="error" sx={{ fontSize: '0.9rem' }}>
+            {joinError}
+          </Typography>
         )}
-        {showLeave && (
-          <Button variant="outlined" color="error" onClick={leaveLobby}>
-            ❌ Lobiden Ayrıl
+
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button onClick={joinLobby} variant="contained" color="primary" sx={{ borderRadius: 2 }}>
+            ✅ Katıl
           </Button>
-        )}
+          <Button onClick={() => { setShowPasswordPrompt(false); setPasswordInput(""); }} variant="outlined" color="inherit" sx={{ borderRadius: 2 }}>
+            İptal
+          </Button>
+        </Box>
       </Box>
+    ) : (
+      <Button variant="contained" color="primary" onClick={joinLobby}>
+        ✅ Lobiye Katıl
+      </Button>
+    )
+  )}
+  {showLeave && (
+    <Button variant="outlined" color="error" onClick={leaveLobby}>
+      ❌ Lobiden Ayrıl
+    </Button>
+  )}
+</Box>
+
 
       <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
         <Button variant="contained" size="large" color="success" disabled>

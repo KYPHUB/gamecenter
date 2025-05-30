@@ -53,6 +53,9 @@ export default function Lobby() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState(null);
 
+  const [lobbyPassword, setLobbyPassword] = useState("");
+
+
   const fetchAll = async () => {
     setLoading(true);
     try {
@@ -127,6 +130,7 @@ export default function Lobby() {
         isEvent,
         eventStartTime: isEvent ? startTime : null,
         eventEndTime:   isEvent ? endTime   : null,
+        password: isPrivate ? lobbyPassword : null,
       };
 
       const { data } = await axios.post('/api/lobbies', body, { withCredentials: true });
@@ -317,6 +321,19 @@ return (
               </Grid>
             </Grid>
           )}
+          {isPrivate && (
+          <Grid item xs={12} md={6} lg={4}>
+            <TextField
+              label="Lobi Şifresi"
+              type="password"
+              fullWidth
+              value={lobbyPassword}
+              onChange={(e) => setLobbyPassword(e.target.value)}
+              InputProps={{ sx: { borderRadius: 3, color: "white" } }}
+              InputLabelProps={{ sx: { color: "#b0bec5" } }}
+            />
+          </Grid>
+        )}
 
           <Grid item xs={12} md={8} lg={4} sx={{ mt: { xs: 1, md: 0 } }}>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>

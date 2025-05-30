@@ -173,21 +173,23 @@ app.post('/api/lobbies', authMiddleware, (req, res) => {
   if (!game) return res.status(400).json({ message: 'Geçersiz oyun' });
 
   const newLobby = {
-    id: `lobby-${Date.now()}`,
-    name: lobbyName,
-    game: game.name,
-    gameId,
-    currentPlayers: 1,
-    maxPlayers: Math.min(Math.max(parseInt(maxPlayers) || 6, 2), 10),
-    isPrivate: !!isPrivate,
-    isEvent: !!isEvent,
-    eventStartTime: isEvent ? new Date(eventStartTime) : null,
-    eventEndTime: isEvent ? new Date(eventEndTime) : null,
-    createdBy: req.session.user.email,
-    participants: [req.session.user.email],
-    createdAt: new Date(),
-    creatorLeftAt: null
-  };
+  id: `lobby-${Date.now()}`,
+  name: lobbyName,
+  game: game.name,
+  gameId,
+  currentPlayers: 1,
+  maxPlayers: Math.min(Math.max(parseInt(maxPlayers) || 6, 2), 10),
+  isPrivate: !!isPrivate,
+  isEvent: !!isEvent,
+  eventStartTime: isEvent ? new Date(eventStartTime) : null,
+  eventEndTime: isEvent ? new Date(eventEndTime) : null,
+  createdBy: req.session.user.email,
+  participants: [req.session.user.email],
+  createdAt: new Date(),
+  creatorLeftAt: null,
+  password: isPrivate ? req.body.password?.trim() : null 
+};
+
 
   dummyLobbies.unshift(newLobby);
   res.status(201).json({ success: true, lobby: newLobby });
@@ -199,12 +201,20 @@ app.post('/api/lobbies/:id/join', authMiddleware, (req, res) => {
 
   const userEmail = req.session.user.email;
 
+  if (lobby.isPrivate) {
+  const providedPassword = (req.body.password || "").trim();
+  if (!providedPassword || providedPassword !== lobby.password) {
+    return res.status(401).json({ message: 'Şifre hatalı veya eksik.' });
+  }
+}
+
+
   if (!lobby.participants.includes(userEmail)) {
     lobby.participants.push(userEmail);
     lobby.currentPlayers++;
   }
 
-  res.json({ success: true, participants: lobby.participants });
+  return res.json({ success: true, participants: lobby.participants });
 });
 
 app.post('/api/lobbies/:id/leave', authMiddleware, (req, res) => {

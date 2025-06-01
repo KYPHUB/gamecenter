@@ -235,3 +235,99 @@ app.post('/api/lobbies/:id/leave', authMiddleware, (req, res) => {
 app.listen(PORT, () => {
   console.log(`Backend http://localhost:${PORT} üzerinde çalışıyor.`);
 });
+
+app.delete('/api/lobbies/:id', authMiddleware, (req, res) => {
+  const lobbyId = req.params.id;
+  const userEmail = req.session.user.email;
+
+  const index = dummyLobbies.findIndex(l => l.id === lobbyId);
+  if (index === -1) return res.status(404).json({ message: 'Lobi bulunamadı' });
+
+  const lobby = dummyLobbies[index];
+  if (lobby.createdBy !== userEmail) {
+    return res.status(403).json({ message: 'Bu işlemi sadece lobiyi oluşturan kişi yapabilir.' });
+  }
+
+  dummyLobbies.splice(index, 1);
+  res.json({ success: true, message: 'Lobi silindi' });
+});
+
+app.put('/api/lobbies/:id', authMiddleware, (req, res) => {
+  const lobbyId = req.params.id;
+  const userEmail = req.session.user.email;
+
+  const lobby = dummyLobbies.find(l => l.id === lobbyId);
+  if (!lobby) return res.status(404).json({ message: 'Lobi bulunamadı' });
+
+  if (lobby.createdBy !== userEmail) {
+    return res.status(403).json({ message: 'Bu işlemi sadece lobiyi oluşturan kişi yapabilir.' });
+  }
+
+  const {
+    lobbyName,
+    maxPlayers,
+    isPrivate,
+    isEvent,
+    eventStartTime,
+    eventEndTime,
+    password,
+    gameId
+  } = req.body;
+
+  
+  if (!lobbyName || !gameId) {
+    return res.status(400).json({ message: 'Lobi adı ve oyun seçimi zorunludur.' });
+  }
+
+  
+  const game = allGames.find(g => g.id === gameId);
+  if (!game) return res.status(400).json({ message: 'Geçersiz oyun ID' });
+
+  
+  const newMax = Math.min(Math.max(parseInt(maxPlayers), 2), 10);
+  if (newMax < lobby.currentPlayers) {
+    return res.status(400).json({ message: `Bu lobide zaten ${lobby.currentPlayers} oyuncu var. Oyuncu sayısı azaltılamaz.` });
+  }
+
+ 
+  if (isPrivate && (!password || password.trim() === '')) {
+    return res.status(400).json({ message: 'Şifreli lobilerde şifre boş bırakılamaz.' });
+  }
+
+  
+  if (isEvent) {
+    if (!eventStartTime || !eventEndTime) {
+      return res.status(400).json({ message: 'Etkinlik başlangıç ve bitiş tarihleri zorunludur.' });
+    }
+
+    const start = new Date(eventStartTime);
+    const end = new Date(eventEndTime);
+    const now = new Date();
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ message: 'Tarih biçimi geçersiz.' });
+    }
+    if (start < now) return res.status(400).json({ message: 'Başlangıç tarihi geçmişte olamaz.' });
+    if (end < now) return res.status(400).json({ message: 'Bitiş tarihi geçmişte olamaz.' });
+    if (end <= start) return res.status(400).json({ message: 'Bitiş tarihi başlangıçtan sonra olmalıdır.' });
+
+    lobby.eventStartTime = start;
+    lobby.eventEndTime = end;
+  } else {
+    lobby.eventStartTime = null;
+    lobby.eventEndTime = null;
+  }
+
+  
+  lobby.name = lobbyName.trim();
+  lobby.maxPlayers = newMax;
+  lobby.isPrivate = !!isPrivate;
+  lobby.password = isPrivate ? password?.trim() : null;
+  lobby.isEvent = !!isEvent;
+  lobby.gameId = game.id;
+  lobby.game = game.name;
+
+  return res.json({ success: true, message: 'Lobi güncellendi', lobby });
+});
+
+

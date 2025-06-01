@@ -24,6 +24,12 @@ import LockIcon from '@mui/icons-material/Lock';
 import EventIcon from '@mui/icons-material/Event';
 import { useNavigate } from 'react-router-dom';
 import Countdown from '../components/Countdown';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+
 
 
 
@@ -39,6 +45,11 @@ function Home() {
 
   const [lobbyLink, setLobbyLink] = useState("");
   const [snackOpen, setSnackOpen] = useState(false);
+
+  const [lobbyToDelete, setLobbyToDelete] = useState(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
 
 
 
@@ -68,6 +79,23 @@ const handleGoToLobby = () => {
     setSnackOpen(true);
   }
 };
+
+const handleDeleteLobby = async () => {
+  if (!lobbyToDelete) return;
+  setDeleteLoading(true);
+  try {
+    await axios.delete(`/api/lobbies/${lobbyToDelete.id}`, { withCredentials: true });
+    setLobbies(prev => prev.filter(l => l.id !== lobbyToDelete.id));
+    setSnackOpen(true); // yeniden kullanılabilir snackbar
+  } catch (err) {
+    console.error("Lobi silinemedi:", err.message);
+  } finally {
+    setDeleteLoading(false);
+    setDeleteDialogOpen(false);
+    setLobbyToDelete(null);
+  }
+};
+
 
 
   // Oturum kontrolü
@@ -169,6 +197,7 @@ const handleGoToLobby = () => {
           Git
         </Button>
       </Box>
+
       <Snackbar
         open={snackOpen}
         autoHideDuration={3000}
@@ -205,8 +234,8 @@ const handleGoToLobby = () => {
             </Button>
           </Box>
 
-          {/*  Oyunlar */}
-          <Typography variant="h5" gutterBottom sx={{ fontFamily: 'Orbitron, sans-serif', mb: 2, color:'#92fe9d' }}>
+          {/* Oyunlar */}
+          <Typography variant="h5" gutterBottom sx={{ fontFamily: 'Orbitron, sans-serif', mb: 2, color: '#92fe9d' }}>
             Oyunlar
           </Typography>
           <Grid container spacing={3} sx={{ mb: 5 }}>
@@ -252,19 +281,30 @@ const handleGoToLobby = () => {
 
           <Divider sx={{ my: 4, borderColor: 'rgba(255, 255, 255, 0.3)' }} />
 
-          {/*  Aktif Lobiler */}
-          <Typography variant="h5" gutterBottom sx={{ fontFamily: 'Orbitron, sans-serif', mb: 2, color:'#ffa700' }}>
+          {/* Aktif Lobiler */}
+          <Typography variant="h5" gutterBottom sx={{ fontFamily: 'Orbitron, sans-serif', mb: 2, color: '#ffa700' }}>
             Aktif Lobiler
           </Typography>
+
           {visibleLobbies.length > 0 ? (
             <List sx={{ bgcolor: 'rgba(0, 0, 0, 0.4)', borderRadius: 2, p: { xs: 1, sm: 2 } }}>
               {visibleLobbies.map((lobby, index) => (
                 <React.Fragment key={lobby.id}>
                   <ListItem
                     secondaryAction={
-                      <Button variant="contained" size="small" onClick={() => navigate(`/lobby/${lobby.id}`)} sx={{ bgcolor: '#ffa700', '&:hover': { bgcolor: '#ff8f00'} }}>
-                        Katıl
-                      </Button>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button variant="contained" size="small" onClick={() => navigate(`/lobby/${lobby.id}`)} sx={{ bgcolor: '#ffa700', '&:hover': { bgcolor: '#ff8f00' } }}>
+                          Katıl
+                        </Button>
+                        {lobby.createdBy === user?.email && (
+                          <IconButton onClick={() => {
+                            setLobbyToDelete(lobby);
+                            setDeleteDialogOpen(true);
+                          }} sx={{ color: '#ff1744' }}>
+                            <DeleteIcon />
+                          </IconButton>
+                        )}
+                      </Box>
                     }
                     sx={{ py: 1.5 }}
                   >
@@ -281,9 +321,7 @@ const handleGoToLobby = () => {
                           <div>Oyun: {lobby.game} | Oyuncular: {lobby.currentPlayers}/{lobby.maxPlayers}</div>
                           {lobby.isEvent && lobby.eventStartTime && (
                             isEventSoon(lobby.eventStartTime) ? (
-                              <div>
-                                Başlamasına: <Countdown target={lobby.eventStartTime} />
-                              </div>
+                              <div>Başlamasına: <Countdown target={lobby.eventStartTime} /></div>
                             ) : (
                               <div>Etkinlik: {new Date(lobby.eventStartTime).toLocaleString('tr-TR')}</div>
                             )
@@ -303,6 +341,20 @@ const handleGoToLobby = () => {
           )}
         </>
       )}
+
+      {/* Silme Onay Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Lobiyi Sil</DialogTitle>
+        <DialogContent>
+          <Typography>"{lobbyToDelete?.name}" adlı lobiyi silmek istediğinize emin misiniz?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} color="inherit">İptal</Button>
+          <Button onClick={handleDeleteLobby} color="error" variant="contained" disabled={deleteLoading}>
+            {deleteLoading ? "Siliniyor..." : "Sil"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   </>
 );

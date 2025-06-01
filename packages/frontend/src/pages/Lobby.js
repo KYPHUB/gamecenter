@@ -80,7 +80,7 @@ export default function Lobby() {
     })();
   }, []);
 
-  // === GÜNCELLENMİŞ createLobby ===
+
   const createLobby = async () => {
     setFormError(null);
 

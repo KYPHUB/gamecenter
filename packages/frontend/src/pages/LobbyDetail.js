@@ -10,6 +10,19 @@ import { useAuth } from '../context/AuthContext';
 import Countdown from '../components/Countdown';
 import { Snackbar, IconButton } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import TextField from '@mui/material/TextField';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import InputLabel from '@mui/material/InputLabel';
+import FormControl from '@mui/material/FormControl';
+
+
 
 
 function LobbyDetail() {
@@ -29,6 +42,24 @@ function LobbyDetail() {
   const [joinError, setJoinError] = useState("");
 
   const [copySuccess, setCopySuccess] = useState(false);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteSnack, setDeleteSnack] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    lobbyName: '',
+    gameId: '',
+    maxPlayers: 6,
+    isPrivate: false,
+    password: '',
+    isEvent: false,
+    eventStartTime: '',
+    eventEndTime: ''
+  });
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateSnack, setUpdateSnack] = useState(false);
 
 
 
@@ -83,6 +114,23 @@ function LobbyDetail() {
   const getGameName = (gameId) => {
     return availableGames.find(g => g.id === gameId)?.name || gameId;
   };
+  const handleDeleteLobby = async () => {
+  if (!lobby) return;
+  setDeleteLoading(true);
+  try {
+    await axios.delete(`/api/lobbies/${lobby.id}`, { withCredentials: true });
+    setDeleteSnack(true);
+    setTimeout(() => {
+      navigate('/home');
+    }, 1500);
+  } catch (err) {
+    console.error('Silme işlemi başarısız:', err);
+  } finally {
+    setDeleteLoading(false);
+    setDeleteDialogOpen(false);
+  }
+};
+
 
   const joinLobby = async () => {
   setJoinError("");
@@ -119,7 +167,7 @@ function LobbyDetail() {
       ...prev,
       participants: (prev.participants || []).filter(p => p !== user.email),
       currentPlayers: Math.max(0, (prev.participants?.length || 1) - 1),
-      creatorLeftAt: res.data.creatorLeftAt || prev.creatorLeftAt  // 🔁 Burası önemli
+      creatorLeftAt: res.data.creatorLeftAt || prev.creatorLeftAt  
     }));
   } catch {
     alert('Lobiden ayrılamadın');
@@ -199,28 +247,26 @@ const expireTime = lobby.creatorLeftAt
       <Typography variant="h5" gutterBottom sx={{ color: '#ccc', mb: 4 }}>
         Oyun: {getGameName(lobby.game)}
       </Typography>
+
       <Box sx={{ mt: 4, p: 2, borderRadius: 2, background: 'rgba(255,255,255,0.05)' }}>
-  <Typography sx={{ mb: 1, fontWeight: 'bold' }}>
-    🔗 Lobi Bağlantısı:
-  </Typography>
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-    <Typography sx={{ wordBreak: 'break-all', color: '#90caf9' }}>
-      {`${window.location.origin}/lobby/${lobby.id}`}
-    </Typography>
-    <IconButton onClick={handleCopyLink} color="primary">
-      <ContentCopyIcon />
-    </IconButton>
-  </Box>
-</Box>
+        <Typography sx={{ mb: 1, fontWeight: 'bold' }}>🔗 Lobi Bağlantısı:</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography sx={{ wordBreak: 'break-all', color: '#90caf9' }}>
+            {`${window.location.origin}/lobby/${lobby.id}`}
+          </Typography>
+          <IconButton onClick={handleCopyLink} color="primary">
+            <ContentCopyIcon />
+          </IconButton>
+        </Box>
+      </Box>
 
-<Snackbar
-  open={copySuccess}
-  autoHideDuration={3000}
-  onClose={() => setCopySuccess(false)}
-  message="Bağlantı kopyalandı!"
-  anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-/>
-
+      <Snackbar
+        open={copySuccess}
+        autoHideDuration={3000}
+        onClose={() => setCopySuccess(false)}
+        message="Bağlantı kopyalandı!"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6}>
@@ -235,8 +281,6 @@ const expireTime = lobby.creatorLeftAt
           </Typography>
         </Grid>
 
-        
-
         {lobby.isEvent && lobby.eventEndTime && (
           <Grid item xs={12}>
             <Typography variant="h6">Etkinliğin Bitmesine Kalan Süre:</Typography>
@@ -247,8 +291,7 @@ const expireTime = lobby.creatorLeftAt
 
       <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>Kurucu:</Typography>
       <Typography sx={{ mb: 2 }}>👑 {lobby.createdBy.split('@')[0]}</Typography>
-
-      <Typography variant="h6" gutterBottom>Katılımcılar:</Typography>
+            <Typography variant="h6" gutterBottom>Katılımcılar:</Typography>
       <List sx={{ bgcolor: 'rgba(0, 0, 0, 0.2)', borderRadius: 1 }}>
         {participants.includes(lobby.createdBy) && (
           <ListItem><ListItemText primary={lobby.createdBy.split('@')[0]} /></ListItem>
@@ -272,78 +315,282 @@ const expireTime = lobby.creatorLeftAt
       )}
 
       <Box sx={{ mt: 4, textAlign: 'center', display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
-  {showJoin && (
-    lobby.isPrivate ? (
-      <Box
-        sx={{
-          p: 3,
-          borderRadius: 3,
-          bgcolor: 'rgba(255,255,255,0.05)',
-          backdropFilter: 'blur(6px)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 2,
-          maxWidth: 400,
-          width: '100%',
-        }}
-      >
-        <Typography variant="h6" sx={{ color: '#ffa700' }}>
-          🔒 Bu lobiye katılmak için şifre gerekli
-        </Typography>
+        {showJoin && (
+          lobby.isPrivate ? (
+            <Box
+              sx={{
+                p: 3,
+                borderRadius: 3,
+                bgcolor: 'rgba(255,255,255,0.05)',
+                backdropFilter: 'blur(6px)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 2,
+                maxWidth: 400,
+                width: '100%',
+              }}
+            >
+              <Typography variant="h6" sx={{ color: '#ffa700' }}>
+                🔒 Bu lobiye katılmak için şifre gerekli
+              </Typography>
 
-        <Box sx={{ width: '100%' }}>
-          <input
-            type="password"
-            value={passwordInput}
-            onChange={(e) => setPasswordInput(e.target.value)}
-            placeholder="Lobi Şifresi"
-            style={{
-              width: '100%',
-              padding: '12px',
-              fontSize: '16px',
-              borderRadius: '8px',
-              border: '1px solid #ccc',
-              backgroundColor: '#f5f5f5',
-              color: '#333',
-            }}
-          />
-        </Box>
+              <Box sx={{ width: '100%' }}>
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder="Lobi Şifresi"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    fontSize: '16px',
+                    borderRadius: '8px',
+                    border: '1px solid #ccc',
+                    backgroundColor: '#f5f5f5',
+                    color: '#333',
+                  }}
+                />
+              </Box>
 
-        {joinError && (
-          <Typography color="error" sx={{ fontSize: '0.9rem' }}>
-            {joinError}
-          </Typography>
+              {joinError && (
+                <Typography color="error" sx={{ fontSize: '0.9rem' }}>
+                  {joinError}
+                </Typography>
+              )}
+
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button onClick={joinLobby} variant="contained" color="primary" sx={{ borderRadius: 2 }}>
+                  ✅ Katıl
+                </Button>
+                <Button onClick={() => { setShowPasswordPrompt(false); setPasswordInput(""); }} variant="outlined" color="inherit" sx={{ borderRadius: 2 }}>
+                  İptal
+                </Button>
+              </Box>
+            </Box>
+          ) : (
+            <Button variant="contained" color="primary" onClick={joinLobby}>
+              ✅ Lobiye Katıl
+            </Button>
+          )
         )}
 
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button onClick={joinLobby} variant="contained" color="primary" sx={{ borderRadius: 2 }}>
-            ✅ Katıl
+        {showLeave && (
+          <Button variant="outlined" color="error" onClick={leaveLobby}>
+            ❌ Lobiden Ayrıl
           </Button>
-          <Button onClick={() => { setShowPasswordPrompt(false); setPasswordInput(""); }} variant="outlined" color="inherit" sx={{ borderRadius: 2 }}>
-            İptal
-          </Button>
-        </Box>
+        )}
+
+        {isOwner && (
+          <>
+            <Button variant="contained" color="error" onClick={() => setDeleteDialogOpen(true)}>
+              🗑️ Lobiyi Sil
+            </Button>
+            <Button variant="contained" color="info" onClick={() => {
+              setEditForm({
+                lobbyName: lobby.name,
+                gameId: lobby.gameId,
+                maxPlayers: lobby.maxPlayers,
+                isPrivate: lobby.isPrivate,
+                password: lobby.password || '',
+                isEvent: lobby.isEvent,
+                eventStartTime: lobby.eventStartTime?.slice(0, 16) || '',
+                eventEndTime: lobby.eventEndTime?.slice(0, 16) || ''
+              });
+              setEditOpen(true);
+            }}>
+              ✏️ Düzenle
+            </Button>
+          </>
+        )}
       </Box>
-    ) : (
-      <Button variant="contained" color="primary" onClick={joinLobby}>
-        ✅ Lobiye Katıl
-      </Button>
-    )
-  )}
-  {showLeave && (
-    <Button variant="outlined" color="error" onClick={leaveLobby}>
-      ❌ Lobiden Ayrıl
-    </Button>
-  )}
-</Box>
-
-
-      <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+              <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
         <Button variant="contained" size="large" color="success" disabled>
           Oyunu Başlat (Yakında)
         </Button>
       </Box>
+
+      {/* Silme Onay Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Lobiyi Sil</DialogTitle>
+        <DialogContent>
+          <Typography>"{lobby.name}" adlı lobiyi silmek istediğinize emin misiniz?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)} color="inherit">İptal</Button>
+          <Button onClick={handleDeleteLobby} color="error" variant="contained" disabled={deleteLoading}>
+            {deleteLoading ? "Siliniyor..." : "Sil"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Düzenleme Dialog */}
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Lobi Bilgilerini Güncelle</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <TextField
+            label="Lobi Adı"
+            value={editForm.lobbyName}
+            onChange={e => setEditForm(prev => ({ ...prev, lobbyName: e.target.value }))}
+            fullWidth
+          />
+          <FormControl fullWidth>
+            <InputLabel>Oyun</InputLabel>
+            <Select
+              value={editForm.gameId}
+              onChange={e => setEditForm(prev => ({ ...prev, gameId: e.target.value }))}
+              label="Oyun"
+            >
+              {availableGames.map(g => (
+                <MenuItem key={g.id} value={g.id}>{g.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <TextField
+            label="Oyuncu Sayısı"
+            type="number"
+            inputProps={{ min: 2, max: 10 }}
+            value={editForm.maxPlayers}
+            onChange={e => setEditForm(prev => ({ ...prev, maxPlayers: parseInt(e.target.value) }))}
+            fullWidth
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={editForm.isPrivate}
+                onChange={e => setEditForm(prev => ({ ...prev, isPrivate: e.target.checked }))}
+              />
+            }
+            label="🔒 Özel Lobi"
+          />
+          {editForm.isPrivate && (
+            <TextField
+              label="Lobi Şifresi"
+              type="password"
+              value={editForm.password}
+              onChange={e => setEditForm(prev => ({ ...prev, password: e.target.value }))}
+              fullWidth
+            />
+          )}
+          <FormControlLabel
+            control={
+              <Switch
+                checked={editForm.isEvent}
+                onChange={e => setEditForm(prev => ({ ...prev, isEvent: e.target.checked }))}
+              />
+            }
+            label="📅 Etkinlik Lobisi"
+          />
+          {editForm.isEvent && (
+            <>
+              <TextField
+                label="Başlangıç Zamanı"
+                type="datetime-local"
+                InputLabelProps={{ shrink: true }}
+                value={editForm.eventStartTime}
+                onChange={e => setEditForm(prev => ({ ...prev, eventStartTime: e.target.value }))}
+                fullWidth
+              />
+              <TextField
+                label="Bitiş Zamanı"
+                type="datetime-local"
+                InputLabelProps={{ shrink: true }}
+                value={editForm.eventEndTime}
+                onChange={e => setEditForm(prev => ({ ...prev, eventEndTime: e.target.value }))}
+                fullWidth
+              />
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditOpen(false)} color="inherit">İptal</Button>
+          <Button
+            variant="contained"
+            color="success"
+            disabled={updateLoading}
+            onClick={async () => {
+  const {
+    lobbyName,
+    gameId,
+    maxPlayers,
+    isPrivate,
+    password,
+    isEvent,
+    eventStartTime,
+    eventEndTime
+  } = editForm;
+
+  // Validasyonlar
+  if (!lobbyName.trim() || !gameId) {
+    alert("Lobi adı ve oyun seçimi zorunludur.");
+    return;
+  }
+
+  if (maxPlayers < lobby.currentPlayers) {
+    alert(`Lobide şu anda ${lobby.currentPlayers} oyuncu var. Oyuncu sayısını azaltamazsınız.`);
+    return;
+  }
+
+  if (isPrivate && (!password || password.trim() === '')) {
+    alert("Şifreli lobilerde şifre boş bırakılamaz.");
+    return;
+  }
+
+  if (isEvent) {
+    const start = new Date(eventStartTime);
+    const end = new Date(eventEndTime);
+    const now = new Date();
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      alert("Etkinlik tarihleri geçersiz.");
+      return;
+    }
+
+    if (start < now) {
+      alert("Etkinlik başlangıç zamanı geçmişte olamaz.");
+      return;
+    }
+
+    if (end <= start) {
+      alert("Etkinlik bitiş zamanı başlangıçtan sonra olmalıdır.");
+      return;
+    }
+  }
+
+  
+  setUpdateLoading(true);
+  try {
+    const res = await axios.put(`/api/lobbies/${lobby.id}`, editForm, { withCredentials: true });
+    setLobby(res.data.lobby);
+    setUpdateSnack(true);
+    setEditOpen(false);
+  } catch {
+    alert('Güncelleme başarısız!');
+  } finally {
+    setUpdateLoading(false);
+  }
+}}
+
+          >
+            {updateLoading ? 'Kaydediliyor...' : 'Kaydet'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={deleteSnack}
+        autoHideDuration={3000}
+        onClose={() => setDeleteSnack(false)}
+        message="Lobi silindi"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
+      <Snackbar
+        open={updateSnack}
+        autoHideDuration={3000}
+        onClose={() => setUpdateSnack(false)}
+        message="Lobi güncellendi"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
     </Box>
   </>
 );

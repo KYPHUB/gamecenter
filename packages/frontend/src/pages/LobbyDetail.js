@@ -21,6 +21,10 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
+import SoundButton from '../components/SoundButton';
+import SoundSwitch from '../components/SoundSwitch';
+import NotifySound from '../components/NotifySound'
+
 
 
 
@@ -84,6 +88,19 @@ function LobbyDetail() {
     };
     check();
   }, []);
+
+ useEffect(() => {
+  if (copySuccess) NotifySound();
+}, [copySuccess]);
+
+useEffect(() => {
+  if (deleteSnack) NotifySound();
+}, [deleteSnack]);
+
+useEffect(() => {
+  if (updateSnack) NotifySound();
+}, [updateSnack]);
+
 
   useEffect(() => {
     if (!isAuthLoading && user && lobbyId) {
@@ -369,23 +386,23 @@ const expireTime = lobby.creatorLeftAt
               </Box>
             </Box>
           ) : (
-            <Button variant="contained" color="primary" onClick={joinLobby}>
+            <SoundButton variant="contained" color="primary" onClick={joinLobby}>
               ✅ Lobiye Katıl
-            </Button>
+            </SoundButton>
           )
         )}
 
         {showLeave && (
-          <Button variant="outlined" color="error" onClick={leaveLobby}>
+          <SoundButton variant="outlined" color="error" onClick={leaveLobby}>
             ❌ Lobiden Ayrıl
-          </Button>
+          </SoundButton>
         )}
 
         {isOwner && (
           <>
-            <Button variant="contained" color="error" onClick={() => setDeleteDialogOpen(true)}>
+            <SoundButton variant="contained" color="error" onClick={() => setDeleteDialogOpen(true)}>
               🗑️ Lobiyi Sil
-            </Button>
+            </SoundButton>
             <Button variant="contained" color="info" onClick={() => {
               setEditForm({
                 lobbyName: lobby.name,
@@ -456,7 +473,7 @@ const expireTime = lobby.creatorLeftAt
           />
           <FormControlLabel
             control={
-              <Switch
+              <SoundSwitch
                 checked={editForm.isPrivate}
                 onChange={e => setEditForm(prev => ({ ...prev, isPrivate: e.target.checked }))}
               />
@@ -474,7 +491,7 @@ const expireTime = lobby.creatorLeftAt
           )}
           <FormControlLabel
             control={
-              <Switch
+              <SoundSwitch
                 checked={editForm.isEvent}
                 onChange={e => setEditForm(prev => ({ ...prev, isEvent: e.target.checked }))}
               />
@@ -504,7 +521,7 @@ const expireTime = lobby.creatorLeftAt
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditOpen(false)} color="inherit">İptal</Button>
-          <Button
+          <SoundButton
             variant="contained"
             color="success"
             disabled={updateLoading}
@@ -573,7 +590,7 @@ const expireTime = lobby.creatorLeftAt
 
           >
             {updateLoading ? 'Kaydediliyor...' : 'Kaydet'}
-          </Button>
+          </SoundButton>
         </DialogActions>
       </Dialog>
 

@@ -30,6 +30,10 @@ import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 import EventIcon from "@mui/icons-material/Event";
 import Countdown from "../components/Countdown";
+import SoundButton from '../components/SoundButton';
+import SoundSwitch from '../components/SoundSwitch';
+import NotifySound  from '../components/NotifySound';
+
 
 
 export default function Lobby() {
@@ -84,6 +88,8 @@ export default function Lobby() {
   const createLobby = async () => {
     setFormError(null);
 
+    
+
     if (!lobbyName.trim() || !selectedGame) {
       return setFormError('Lobi adı ve oyun seçimi zorunludur.');
     }
@@ -119,6 +125,9 @@ export default function Lobby() {
       if (end   < start)    return setFormError('Bitiş, başlangıçtan önce olamaz.');
       if (+end === +start)  return setFormError('Bitiş ve başlangıç aynı olamaz.');
     }
+
+
+
 
     setSubmitting(true);
     try {
@@ -284,13 +293,13 @@ return (
 
           <Grid item xs={12} md={6} lg={4}>
             <FormControlLabel
-              control={<Switch checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} color="secondary" />}
+              control={<SoundSwitch checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} color="secondary" />}
               label={<Typography variant="body2">🔒 Özel Lobi</Typography>}
             />
           </Grid>
           <Grid item xs={12} md={6} lg={4}>
             <FormControlLabel
-              control={<Switch checked={isEvent} onChange={(e) => setIsEvent(e.target.checked)} color="warning" />}
+              control={<SoundSwitch checked={isEvent} onChange={(e) => setIsEvent(e.target.checked)} color="warning" />}
               label={<Typography variant="body2">📅 Etkinlik Lobisi</Typography>}
             />
           </Grid>
@@ -337,14 +346,14 @@ return (
 
           <Grid item xs={12} md={8} lg={4} sx={{ mt: { xs: 1, md: 0 } }}>
             <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              <Button
+              <SoundButton
                 variant="contained"
                 onClick={createLobby}
                 disabled={submitting}
                 sx={{ borderRadius: 3, px: 4, flexShrink: 0, background: "linear-gradient(90deg,#008cff,#7d2cff)" }}
               >
                 {submitting ? <CircularProgress size={24} /> : "➕ Lobi Oluştur"}
-              </Button>
+              </SoundButton>
               <Tooltip title="Yenile">
                 <IconButton color="inherit" onClick={fetchAll}>
                   <RefreshIcon />

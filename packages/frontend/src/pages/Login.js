@@ -14,6 +14,10 @@ import {
   CircularProgress,
   Snackbar
 } from '@mui/material';
+import SoundButton from '../components/SoundButton';
+import SoundSwitch from '../components/SoundSwitch';
+import NotifySound from '../components/NotifySound'
+
 
 export default function Login() {
   const location = useLocation();
@@ -45,6 +49,12 @@ export default function Login() {
       }
     }
   }, []);
+
+  useEffect(() => {
+  if (showSnackbar) {
+    NotifySound(); 
+  }
+}, [showSnackbar]);
 
   useEffect(() => {
     const saved = localStorage.getItem('rememberedEmail');
@@ -262,7 +272,7 @@ export default function Login() {
           )}
 
           {/* Giriş Butonu */}
-          <Button
+          <SoundButton
             type="submit"
             variant="contained"
             fullWidth
@@ -287,7 +297,7 @@ export default function Login() {
               : forgotMode
               ? '📨 ŞİFRE GÖNDER'
               : '🎮 GİRİŞ YAP'}
-          </Button>
+          </SoundButton>
           
           {forgotMode && (
           <Typography

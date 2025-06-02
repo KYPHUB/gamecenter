@@ -29,6 +29,10 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
+import SoundButton from '../components/SoundButton';
+import SoundSwitch from '../components/SoundSwitch';
+import NotifySound from '../components/NotifySound'
+
 
 
 
@@ -96,7 +100,11 @@ const handleDeleteLobby = async () => {
   }
 };
 
-
+useEffect(() => {
+  if (snackOpen) {
+    NotifySound();
+  }
+}, [snackOpen]);
 
   // Oturum kontrolü
   useEffect(() => {
@@ -189,20 +197,20 @@ const handleDeleteLobby = async () => {
           InputProps={{ sx: { borderRadius: 3, color: 'white' } }}
           InputLabelProps={{ sx: { color: '#b0bec5' } }}
         />
-        <Button
+        <SoundButton
           onClick={handleGoToLobby}
           variant="contained"
           sx={{ borderRadius: 3, px: 4 }}
         >
           Git
-        </Button>
+        </SoundButton>
       </Box>
 
       <Snackbar
         open={snackOpen}
         autoHideDuration={3000}
         onClose={() => setSnackOpen(false)}
-        message="Geçersiz bağlantı"
+        message="Lobi Silindi"
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
 
@@ -223,7 +231,7 @@ const handleDeleteLobby = async () => {
             <Typography variant="h4" sx={{ fontFamily: 'Orbitron, sans-serif', fontWeight: 'bold' }}>
               Ana Ekran
             </Typography>
-            <Button
+            <SoundButton
               variant="contained"
               color="secondary"
               size="large"
@@ -231,7 +239,7 @@ const handleDeleteLobby = async () => {
               onClick={handleNewLobbyClick}
             >
               Yeni Lobi Oluştur
-            </Button>
+            </SoundButton>
           </Box>
 
           {/* Oyunlar */}
@@ -293,9 +301,9 @@ const handleDeleteLobby = async () => {
                   <ListItem
                     secondaryAction={
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button variant="contained" size="small" onClick={() => navigate(`/lobby/${lobby.id}`)} sx={{ bgcolor: '#ffa700', '&:hover': { bgcolor: '#ff8f00' } }}>
+                        <SoundButton variant="contained" size="small" onClick={() => navigate(`/lobby/${lobby.id}`)} sx={{ bgcolor: '#ffa700', '&:hover': { bgcolor: '#ff8f00' } }}>
                           Katıl
-                        </Button>
+                        </SoundButton>
                         {lobby.createdBy === user?.email && (
                           <IconButton onClick={() => {
                             setLobbyToDelete(lobby);
@@ -350,9 +358,9 @@ const handleDeleteLobby = async () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)} color="inherit">İptal</Button>
-          <Button onClick={handleDeleteLobby} color="error" variant="contained" disabled={deleteLoading}>
+          <SoundButton onClick={handleDeleteLobby} color="error" variant="contained" disabled={deleteLoading}>
             {deleteLoading ? "Siliniyor..." : "Sil"}
-          </Button>
+          </SoundButton>
         </DialogActions>
       </Dialog>
     </Box>

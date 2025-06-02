@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, CircularProgress, Alert } from '@mui/material';
+import {
+  Box, Typography, Button, CircularProgress, Alert, Accordion, AccordionSummary,
+  AccordionDetails, Switch, ToggleButton, ToggleButtonGroup
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Navbar from '../components/Navbar';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -15,7 +19,11 @@ function GameDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Token doğrulama
+  // Dummy ayar state'leri
+  const [soundOn, setSoundOn] = useState(true);
+  const [theme, setTheme] = useState('neon');
+  const [difficulty, setDifficulty] = useState('easy');
+
   useEffect(() => {
     const check = async () => {
       const valid = await verifyToken();
@@ -116,10 +124,83 @@ function GameDetail() {
           variant="contained"
           color="primary"
           size="large"
-          onClick={() => navigate(`/lobby`)}
+          onClick={() => navigate('/lobby')}
         >
           Oyna
         </Button>
+
+        {/* Ek Bölümler */}
+        <Box sx={{ width: '100%', maxWidth: 800 }}>
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'rgba(255,255,255,0.05)' }}>
+              <Typography sx={{ fontWeight: 'bold', color: '#00c9ff' }}>🎮 Nasıl Oynanır?</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography>
+                Bu oyun bir refleks ve dikkat oyunudur. Ekrandaki engellerden kaçın ve puan topla. 
+                WASD veya yön tuşları ile karakterini kontrol et.
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'rgba(255,255,255,0.05)' }}>
+              <Typography sx={{ fontWeight: 'bold', color: '#92fe9d' }}>⚙️ Oyun Ayarları</Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography>Ses Efektleri</Typography>
+                <Switch
+                  checked={soundOn}
+                  onChange={() => setSoundOn(prev => !prev)}
+                  color="info"
+                />
+              </Box>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                <Typography sx={{ mb: 1 }}>Tema</Typography>
+                <ToggleButtonGroup
+                  value={theme}
+                  exclusive
+                  onChange={(e, val) => val && setTheme(val)}
+                  size="small"
+                >
+                  <ToggleButton value="neon">Neon</ToggleButton>
+                  <ToggleButton value="classic">Klasik</ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                <Typography sx={{ mb: 1 }}>Zorluk</Typography>
+                <ToggleButtonGroup
+                  value={difficulty}
+                  exclusive
+                  onChange={(e, val) => val && setDifficulty(val)}
+                  size="small"
+                >
+                  <ToggleButton value="easy">Kolay</ToggleButton>
+                  <ToggleButton value="medium">Orta</ToggleButton>
+                  <ToggleButton value="hard">Zor</ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+
+              <Typography sx={{ fontSize: 12, color: '#bbb', mt: 1 }}>
+                (Not: Bu ayarlar yalnızca görsel amaçlıdır, şu an işlevsel değildir.)
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+
+          <Accordion>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ bgcolor: 'rgba(255,255,255,0.05)' }}>
+              <Typography sx={{ fontWeight: 'bold', color: '#ffaa00' }}>📜 Oyun Geçmişi</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Typography>
+                Şimdilik bu oyun için geçmiş bulunmamaktadır. Gelecekteki versiyonlarda oynadığınız maçlar burada listelenecektir.
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+        </Box>
       </Box>
     </>
   );

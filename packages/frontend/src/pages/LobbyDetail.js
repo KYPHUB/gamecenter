@@ -24,6 +24,10 @@ import FormControl from '@mui/material/FormControl';
 import SoundButton from '../components/SoundButton';
 import SoundSwitch from '../components/SoundSwitch';
 import NotifySound from '../components/NotifySound'
+import { useTheme } from "@mui/material/styles";
+import { useTranslation } from 'react-i18next';
+import { useSocket } from '../context/WebSocketContext';
+
 
 
 
@@ -50,9 +54,13 @@ function LobbyDetail() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteSnack, setDeleteSnack] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const muiTheme = useTheme();
+  const { t } = useTranslation();
+  const socket = useSocket();
 
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState({
+    
     lobbyName: '',
     gameId: '',
     maxPlayers: 6,
@@ -65,6 +73,52 @@ function LobbyDetail() {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateSnack, setUpdateSnack] = useState(false);
 
+   useEffect(() => {
+  if (!socket || !lobby) return;
+
+  const handlePlayerJoin = ({ lobbyId, email }) => {
+  if (lobbyId === lobby.id) {
+    setLobby(prev => {
+      if (prev.participants.includes(email)) return prev;
+      return {
+        ...prev,
+        participants: [...prev.participants, email],
+        currentPlayers: prev.currentPlayers + 1
+      };
+    });
+  }
+};
+
+  const handlePlayerLeave = ({ lobbyId, email }) => {
+  if (lobbyId === lobby.id) {
+    setLobby(prev => ({
+      ...prev,
+      participants: prev.participants.filter(p => p !== email),
+      currentPlayers: Math.max(0, prev.participants.length - 1)
+    }));
+  }
+};
+
+  const handleLobbyUpdate = (updated) => {
+    if (updated.id === lobby.id) setLobby(updated);
+  };
+
+  const handleLobbyDelete = (id) => {
+    if (id === lobby.id) navigate('/home');
+  };
+
+  socket.on('player:join', handlePlayerJoin);
+  socket.on('player:leave', handlePlayerLeave);
+  socket.on('lobby:update', handleLobbyUpdate);
+  socket.on('lobby:delete', handleLobbyDelete);
+
+  return () => {
+    socket.off('player:join', handlePlayerJoin);
+    socket.off('player:leave', handlePlayerLeave);
+    socket.off('lobby:update', handleLobbyUpdate);
+    socket.off('lobby:delete', handleLobbyDelete);
+  };
+}, [socket, lobby, navigate]);
 
 
 
@@ -73,6 +127,58 @@ function LobbyDetail() {
   navigator.clipboard.writeText(url)
     .then(() => setCopySuccess(true))
     .catch(() => alert('Bağlantı kopyalanamadı'));
+};
+
+const handleUpdateLobby = async () => {
+  const {
+    lobbyName,
+    gameId,
+    maxPlayers,
+    isPrivate,
+    password,
+    isEvent,
+    eventStartTime,
+    eventEndTime,
+  } = editForm;
+
+  /* === doğrulamalar === */
+  if (!lobbyName.trim() || !gameId) {
+    alert(t('lobbyName') + ' & ' + t('selectGame') + ' ' + t('errorOccurred'));
+    return;
+  }
+  if (maxPlayers < lobby.currentPlayers) {
+    alert(`${t('players')}: ${lobby.currentPlayers} > ${maxPlayers}`);
+    return;
+  }
+  if (isPrivate && (!password || password.trim() === '')) {
+    alert(t('passwordRequired'));
+    return;
+  }
+  if (isEvent) {
+    const s = new Date(eventStartTime);
+    const e = new Date(eventEndTime);
+    if (isNaN(s) || isNaN(e) || e <= s) {
+      alert(t('errorOccurred'));
+      return;
+    }
+  }
+
+  /* === istek === */
+  setUpdateLoading(true);
+  try {
+    const { data } = await axios.put(
+      `/api/lobbies/${lobby.id}`,
+      editForm,
+      { withCredentials: true }
+    );
+    setLobby(data.lobby);
+    setUpdateSnack(true);
+    setEditOpen(false);
+  } catch (err) {
+    alert(t('errorOccurred'));
+  } finally {
+    setUpdateLoading(false);
+  }
 };
 
 
@@ -163,17 +269,23 @@ useEffect(() => {
       { withCredentials: true }
     );
     setIsInLobby(true);
-    setLobby(prev => ({
-      ...prev,
-      participants: [...(prev.participants || []), user.email],
-      currentPlayers: prev.currentPlayers + 1,
-    }));
+
+    setLobby(prev => {
+      if (prev.participants.includes(user.email)) return prev;
+      return {
+        ...prev,
+        participants: [...prev.participants, user.email],
+        currentPlayers: prev.currentPlayers + 1,
+      };
+    });
+
     setShowPasswordPrompt(false);
     setPasswordInput("");
   } catch (err) {
     setJoinError("Katılım başarısız. Şifre yanlış olabilir.");
   }
 };
+
 
 
   const leaveLobby = async () => {
@@ -251,24 +363,54 @@ const expireTime = lobby.creatorLeftAt
     <Navbar />
     <Box
       sx={{
-        background: 'linear-gradient(to right, #0f2027, #203a43, #2c5364)',
+        background: muiTheme.palette.mode === 'dark'
+          ? 'linear-gradient(to right, #0f2027, #203a43, #2c5364)'
+          : 'linear-gradient(to right, #e0f7fa, #f1f8e9, #ffffff)',
         minHeight: 'calc(100vh - 64px)',
-        padding: { xs: 2, sm: 4, md: 6 },
-        color: 'white',
+        p: { xs: 2, sm: 4, md: 6 },
+        color: muiTheme.palette.text.primary,
       }}
     >
-      <Typography variant="h3" gutterBottom sx={{ fontFamily: 'Orbitron, sans-serif', borderBottom: '1px solid #ffa700', pb: 1, mb: 3 }}>
+      {/* ======= Başlık ve Oyun Bilgisi ======= */}
+      <Typography
+        variant="h3"
+        gutterBottom
+        sx={{
+          fontFamily: 'Orbitron, sans-serif',
+          borderBottom: `1px solid ${muiTheme.palette.warning.main}`,
+          pb: 1,
+          mb: 3,
+        }}
+      >
         {lobby.name}
       </Typography>
 
-      <Typography variant="h5" gutterBottom sx={{ color: '#ccc', mb: 4 }}>
-        Oyun: {getGameName(lobby.game)}
+      <Typography
+        variant="h5"
+        gutterBottom
+        sx={{ color: muiTheme.palette.text.secondary, mb: 4 }}
+      >
+        {t('game')}: {getGameName(lobby.game)}
       </Typography>
 
-      <Box sx={{ mt: 4, p: 2, borderRadius: 2, background: 'rgba(255,255,255,0.05)' }}>
-        <Typography sx={{ mb: 1, fontWeight: 'bold' }}>🔗 Lobi Bağlantısı:</Typography>
+      {/* ======= Lobi Bağlantısı ======= */}
+      <Box
+        sx={{
+          mt: 4,
+          p: 2,
+          borderRadius: 2,
+          background: muiTheme.palette.mode === 'dark'
+            ? 'rgba(255,255,255,0.05)'
+            : '#f5f5f5',
+        }}
+      >
+        <Typography sx={{ mb: 1, fontWeight: 'bold' }}>
+          🔗 {t('lobbyLink')}:
+        </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography sx={{ wordBreak: 'break-all', color: '#90caf9' }}>
+          <Typography
+            sx={{ wordBreak: 'break-all', color: muiTheme.palette.primary.main }}
+          >
             {`${window.location.origin}/lobby/${lobby.id}`}
           </Typography>
           <IconButton onClick={handleCopyLink} color="primary">
@@ -277,68 +419,103 @@ const expireTime = lobby.creatorLeftAt
         </Box>
       </Box>
 
+      {/* ======= Kopyalandı Snackbar ======= */}
       <Snackbar
         open={copySuccess}
         autoHideDuration={3000}
         onClose={() => setCopySuccess(false)}
-        message="Bağlantı kopyalandı!"
+        message={t('linkCopied')}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
 
+      {/* ======= Özet Bilgiler Grid ======= */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6}>
-          <Typography variant="h6">Oyuncular:</Typography>
-          <Typography>{lobby.currentPlayers} / {lobby.maxPlayers}</Typography>
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <Typography variant="h6">Durum:</Typography>
+          <Typography variant="h6">{t('players')}:</Typography>
           <Typography>
-            {lobby.isPrivate ? '🔒 Özel Lobi' : 'Herkese Açık'}
-            {lobby.isEvent ? ' 📅 (Etkinlik Lobisi)' : ''}
+            {lobby.currentPlayers} / {lobby.maxPlayers}
           </Typography>
         </Grid>
+        <Grid item xs={12} sm={6}>
+          <Typography variant="h6">{t('status')}:</Typography>
+          <Typography>
+            {lobby.isPrivate ? `🔒 ${t('private')}` : t('public')}
+            {lobby.isEvent ? ` 📅 (${t('eventLobbyLabel')})` : ''}
+          </Typography>
+        </Grid>
+  {creatorLeftAt && (
+    <Grid item xs={12}>
+      <Typography variant="h6">Lobi otomatik kapanacak:</Typography>
+      <Countdown target={new Date(creatorLeftAt).getTime() + 8 * 60 * 60 * 1000} />
+    </Grid>
+  )}
 
         {lobby.isEvent && lobby.eventEndTime && (
           <Grid item xs={12}>
-            <Typography variant="h6">Etkinliğin Bitmesine Kalan Süre:</Typography>
+            <Typography variant="h6">{t('eventEndsIn')}:</Typography>
             <Countdown target={lobby.eventEndTime} />
           </Grid>
         )}
       </Grid>
 
-      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>Kurucu:</Typography>
-      <Typography sx={{ mb: 2 }}>👑 {lobby.createdBy.split('@')[0]}</Typography>
-            <Typography variant="h6" gutterBottom>Katılımcılar:</Typography>
-      <List sx={{ bgcolor: 'rgba(0, 0, 0, 0.2)', borderRadius: 1 }}>
+      {/* ======= Kurucu & Katılımcılar ======= */}
+      <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+        {t('owner')}:
+      </Typography>
+      <Typography sx={{ mb: 2 }}>
+        👑 {lobby.createdBy.split('@')[0]}
+      </Typography>
+
+      <Typography variant="h6" gutterBottom>
+        {t('participants')}:
+      </Typography>
+
+      <List
+        sx={{
+          bgcolor: muiTheme.palette.mode === 'dark'
+            ? 'rgba(0,0,0,0.2)'
+            : '#f9f9f9',
+          borderRadius: 1,
+        }}
+      >
         {participants.includes(lobby.createdBy) && (
-          <ListItem><ListItemText primary={lobby.createdBy.split('@')[0]} /></ListItem>
+          <ListItem>
+            <ListItemText primary={lobby.createdBy.split('@')[0]} />
+          </ListItem>
         )}
+
         {otherParticipants.length > 0 ? (
           otherParticipants.map((p, i) => (
-            <ListItem key={i}><ListItemText primary={p.split('@')[0]} /></ListItem>
+            <ListItem key={i}>
+              <ListItemText primary={p.split('@')[0]} />
+            </ListItem>
           ))
         ) : !participants.includes(lobby.createdBy) ? (
-          <ListItem><ListItemText primary="Başka katılımcı yok." /></ListItem>
+          <ListItem>
+            <ListItemText primary={t('noOtherParticipants')} />
+          </ListItem>
         ) : null}
       </List>
-
-      {lobby.creatorLeftAt && (
-        <Box sx={{ mt: 5, textAlign: 'center', bgcolor: 'rgba(255,255,255,0.05)', py: 3, borderRadius: 2 }}>
-          <Typography variant="h6" sx={{ mb: 1, color: '#ffa700' }}>
-            Lobi otomatik kapanmasına kalan süre:
-          </Typography>
-          <Countdown target={expireTime} />
-        </Box>
-      )}
-
-      <Box sx={{ mt: 4, textAlign: 'center', display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
+       <Box
+        sx={{
+          mt: 4,
+          textAlign: 'center',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 2,
+          flexWrap: 'wrap',
+        }}
+      >
         {showJoin && (
           lobby.isPrivate ? (
+            /* 🔒 Şifre Prompt-u */
             <Box
               sx={{
                 p: 3,
                 borderRadius: 3,
-                bgcolor: 'rgba(255,255,255,0.05)',
+                bgcolor: muiTheme.palette.mode === 'dark'
+                  ? 'rgba(255,255,255,0.05)'
+                  : '#f3f3f3',
                 backdropFilter: 'blur(6px)',
                 display: 'flex',
                 flexDirection: 'column',
@@ -349,24 +526,16 @@ const expireTime = lobby.creatorLeftAt
               }}
             >
               <Typography variant="h6" sx={{ color: '#ffa700' }}>
-                🔒 Bu lobiye katılmak için şifre gerekli
+                🔒 {t('passwordRequired')}
               </Typography>
 
               <Box sx={{ width: '100%' }}>
-                <input
+                <TextField
                   type="password"
+                  fullWidth
+                  placeholder={t('enterPassword')}
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
-                  placeholder="Lobi Şifresi"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    fontSize: '16px',
-                    borderRadius: '8px',
-                    border: '1px solid #ccc',
-                    backgroundColor: '#f5f5f5',
-                    color: '#333',
-                  }}
                 />
               </Box>
 
@@ -377,235 +546,246 @@ const expireTime = lobby.creatorLeftAt
               )}
 
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <Button onClick={joinLobby} variant="contained" color="primary" sx={{ borderRadius: 2 }}>
-                  ✅ Katıl
-                </Button>
-                <Button onClick={() => { setShowPasswordPrompt(false); setPasswordInput(""); }} variant="outlined" color="inherit" sx={{ borderRadius: 2 }}>
-                  İptal
+                <SoundButton variant="contained" onClick={joinLobby}>
+                  ✅ {t('confirm')}
+                </SoundButton>
+                <Button
+                  variant="outlined"
+                  color="inherit"
+                  onClick={() => {
+                    setShowPasswordPrompt(false);
+                    setPasswordInput('');
+                  }}
+                >
+                  {t('cancel')}
                 </Button>
               </Box>
             </Box>
           ) : (
-            <SoundButton variant="contained" color="primary" onClick={joinLobby}>
-              ✅ Lobiye Katıl
+            <SoundButton variant="contained" onClick={joinLobby}>
+              ✅ {t('joinLobby')}
             </SoundButton>
           )
         )}
 
         {showLeave && (
-          <SoundButton variant="outlined" color="error" onClick={leaveLobby}>
-            ❌ Lobiden Ayrıl
+          <SoundButton
+            variant="outlined"
+            color="error"
+            onClick={leaveLobby}
+          >
+            ❌ {t('leaveLobby')}
           </SoundButton>
         )}
 
         {isOwner && (
           <>
-            <SoundButton variant="contained" color="error" onClick={() => setDeleteDialogOpen(true)}>
-              🗑️ Lobiyi Sil
+            <SoundButton
+              variant="contained"
+              color="error"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              🗑️ {t('deleteLobby')}
             </SoundButton>
-            <Button variant="contained" color="info" onClick={() => {
-              setEditForm({
-                lobbyName: lobby.name,
-                gameId: lobby.gameId,
-                maxPlayers: lobby.maxPlayers,
-                isPrivate: lobby.isPrivate,
-                password: lobby.password || '',
-                isEvent: lobby.isEvent,
-                eventStartTime: lobby.eventStartTime?.slice(0, 16) || '',
-                eventEndTime: lobby.eventEndTime?.slice(0, 16) || ''
-              });
-              setEditOpen(true);
-            }}>
-              ✏️ Düzenle
+            <Button
+              variant="contained"
+              color="info"
+              onClick={() => {
+                setEditForm({
+                  lobbyName: lobby.name,
+                  gameId: lobby.gameId,
+                  maxPlayers: lobby.maxPlayers,
+                  isPrivate: lobby.isPrivate,
+                  password: lobby.password || '',
+                  isEvent: lobby.isEvent,
+                  eventStartTime: lobby.eventStartTime?.slice(0, 16) || '',
+                  eventEndTime: lobby.eventEndTime?.slice(0, 16) || '',
+                });
+                setEditOpen(true);
+              }}
+            >
+              ✏️ {t('editLobby')}
             </Button>
           </>
         )}
       </Box>
-              <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+
+      {/* ======= “Oyunu Başlat” Placeholder ======= */}
+      <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
         <Button variant="contained" size="large" color="success" disabled>
-          Oyunu Başlat (Yakında)
+          {t('startGame')}
         </Button>
       </Box>
 
-      {/* Silme Onay Dialog */}
+      {/* ======= Silme Dialog ======= */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Lobiyi Sil</DialogTitle>
+        <DialogTitle>{t('confirmDeleteLobby')}</DialogTitle>
         <DialogContent>
-          <Typography>"{lobby.name}" adlı lobiyi silmek istediğinize emin misiniz?</Typography>
+          <Typography>
+            {t('deleteConfirmationMessage', { lobbyName: lobby.name })}
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)} color="inherit">İptal</Button>
-          <Button onClick={handleDeleteLobby} color="error" variant="contained" disabled={deleteLoading}>
-            {deleteLoading ? "Siliniyor..." : "Sil"}
+          <Button onClick={() => setDeleteDialogOpen(false)} color="inherit">
+            {t('cancel')}
           </Button>
+          <SoundButton
+            variant="contained"
+            color="error"
+            disabled={deleteLoading}
+            onClick={handleDeleteLobby}
+          >
+            {deleteLoading ? t('deleting') : t('delete')}
+          </SoundButton>
         </DialogActions>
       </Dialog>
 
-      {/* Düzenleme Dialog */}
-      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Lobi Bilgilerini Güncelle</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+      {/* ======= Düzenleme Dialog ======= */}
+      <Dialog
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>{t('editLobby')}</DialogTitle>
+        <DialogContent
+          sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}
+        >
+          {/*  --- Alanlar --- */}
+          {/* Lobi adı */}
           <TextField
-            label="Lobi Adı"
-            value={editForm.lobbyName}
-            onChange={e => setEditForm(prev => ({ ...prev, lobbyName: e.target.value }))}
+            label={t('lobbyName')}
             fullWidth
+            value={editForm.lobbyName}
+            onChange={(e) =>
+              setEditForm((p) => ({ ...p, lobbyName: e.target.value }))
+            }
           />
+          {/* Oyun seçimi */}
           <FormControl fullWidth>
-            <InputLabel>Oyun</InputLabel>
+            <InputLabel>{t('selectGame')}</InputLabel>
             <Select
+              label={t('selectGame')}
               value={editForm.gameId}
-              onChange={e => setEditForm(prev => ({ ...prev, gameId: e.target.value }))}
-              label="Oyun"
+              onChange={(e) =>
+                setEditForm((p) => ({ ...p, gameId: e.target.value }))
+              }
             >
-              {availableGames.map(g => (
-                <MenuItem key={g.id} value={g.id}>{g.name}</MenuItem>
+              {availableGames.map((g) => (
+                <MenuItem key={g.id} value={g.id}>
+                  {g.name}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
+          {/* Oyuncu sayısı */}
           <TextField
-            label="Oyuncu Sayısı"
+            label={t('playerCount')}
             type="number"
             inputProps={{ min: 2, max: 10 }}
-            value={editForm.maxPlayers}
-            onChange={e => setEditForm(prev => ({ ...prev, maxPlayers: parseInt(e.target.value) }))}
             fullWidth
+            value={editForm.maxPlayers}
+            onChange={(e) =>
+              setEditForm((p) => ({
+                ...p,
+                maxPlayers: parseInt(e.target.value || '2', 10),
+              }))
+            }
           />
+          {/* Özel lobi anahtarı */}
           <FormControlLabel
             control={
               <SoundSwitch
                 checked={editForm.isPrivate}
-                onChange={e => setEditForm(prev => ({ ...prev, isPrivate: e.target.checked }))}
+                onChange={(e) =>
+                  setEditForm((p) => ({ ...p, isPrivate: e.target.checked }))
+                }
               />
             }
-            label="🔒 Özel Lobi"
+            label={`🔒 ${t('privateLobby')}`}
           />
           {editForm.isPrivate && (
             <TextField
-              label="Lobi Şifresi"
+              label={t('lobbyPassword')}
               type="password"
-              value={editForm.password}
-              onChange={e => setEditForm(prev => ({ ...prev, password: e.target.value }))}
               fullWidth
+              value={editForm.password}
+              onChange={(e) =>
+                setEditForm((p) => ({ ...p, password: e.target.value }))
+              }
             />
           )}
+          {/* Etkinlik anahtarı */}
           <FormControlLabel
             control={
               <SoundSwitch
                 checked={editForm.isEvent}
-                onChange={e => setEditForm(prev => ({ ...prev, isEvent: e.target.checked }))}
+                onChange={(e) =>
+                  setEditForm((p) => ({ ...p, isEvent: e.target.checked }))
+                }
               />
             }
-            label="📅 Etkinlik Lobisi"
+            label={`📅 ${t('eventLobby')}`}
           />
           {editForm.isEvent && (
             <>
               <TextField
-                label="Başlangıç Zamanı"
+                label={t('startTime')}
                 type="datetime-local"
                 InputLabelProps={{ shrink: true }}
-                value={editForm.eventStartTime}
-                onChange={e => setEditForm(prev => ({ ...prev, eventStartTime: e.target.value }))}
                 fullWidth
+                value={editForm.eventStartTime}
+                onChange={(e) =>
+                  setEditForm((p) => ({
+                    ...p,
+                    eventStartTime: e.target.value,
+                  }))
+                }
               />
               <TextField
-                label="Bitiş Zamanı"
+                label={t('endTime')}
                 type="datetime-local"
                 InputLabelProps={{ shrink: true }}
-                value={editForm.eventEndTime}
-                onChange={e => setEditForm(prev => ({ ...prev, eventEndTime: e.target.value }))}
                 fullWidth
+                value={editForm.eventEndTime}
+                onChange={(e) =>
+                  setEditForm((p) => ({
+                    ...p,
+                    eventEndTime: e.target.value,
+                  }))
+                }
               />
             </>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditOpen(false)} color="inherit">İptal</Button>
+          <Button onClick={() => setEditOpen(false)} color="inherit">
+            {t('cancel')}
+          </Button>
           <SoundButton
             variant="contained"
             color="success"
             disabled={updateLoading}
-            onClick={async () => {
-  const {
-    lobbyName,
-    gameId,
-    maxPlayers,
-    isPrivate,
-    password,
-    isEvent,
-    eventStartTime,
-    eventEndTime
-  } = editForm;
-
-  // Validasyonlar
-  if (!lobbyName.trim() || !gameId) {
-    alert("Lobi adı ve oyun seçimi zorunludur.");
-    return;
-  }
-
-  if (maxPlayers < lobby.currentPlayers) {
-    alert(`Lobide şu anda ${lobby.currentPlayers} oyuncu var. Oyuncu sayısını azaltamazsınız.`);
-    return;
-  }
-
-  if (isPrivate && (!password || password.trim() === '')) {
-    alert("Şifreli lobilerde şifre boş bırakılamaz.");
-    return;
-  }
-
-  if (isEvent) {
-    const start = new Date(eventStartTime);
-    const end = new Date(eventEndTime);
-    const now = new Date();
-
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      alert("Etkinlik tarihleri geçersiz.");
-      return;
-    }
-
-    if (start < now) {
-      alert("Etkinlik başlangıç zamanı geçmişte olamaz.");
-      return;
-    }
-
-    if (end <= start) {
-      alert("Etkinlik bitiş zamanı başlangıçtan sonra olmalıdır.");
-      return;
-    }
-  }
-
-  
-  setUpdateLoading(true);
-  try {
-    const res = await axios.put(`/api/lobbies/${lobby.id}`, editForm, { withCredentials: true });
-    setLobby(res.data.lobby);
-    setUpdateSnack(true);
-    setEditOpen(false);
-  } catch {
-    alert('Güncelleme başarısız!');
-  } finally {
-    setUpdateLoading(false);
-  }
-}}
-
+            onClick={handleUpdateLobby}
           >
-            {updateLoading ? 'Kaydediliyor...' : 'Kaydet'}
+            {updateLoading ? t('saving') : t('save')}
           </SoundButton>
         </DialogActions>
       </Dialog>
 
+      {/* ======= Snackbar’lar ======= */}
       <Snackbar
         open={deleteSnack}
         autoHideDuration={3000}
         onClose={() => setDeleteSnack(false)}
-        message="Lobi silindi"
+        message={t('deleteSuccess')}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
       <Snackbar
         open={updateSnack}
         autoHideDuration={3000}
         onClose={() => setUpdateSnack(false)}
-        message="Lobi güncellendi"
+        message={t('updateSuccess')}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       />
     </Box>

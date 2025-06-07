@@ -13,31 +13,34 @@ export const AuthProvider = ({ children }) => {
 
   
   useEffect(() => {
-    const checkToken = async () => {
-      const storedToken = localStorage.getItem('user_token');
-      if (!storedToken) {
-        setLoading(false);
-        setTokenChecked(true);
-        return;
-      }
+  const checkToken = async () => {
+    const storedToken = localStorage.getItem('user_token');
+    if (!storedToken) {
+      setUser(null); // ✅ token yoksa user boş
+      setLoading(false);
+      setTokenChecked(true);
+      return;
+    }
 
-      try {
-        const res = await axios.post('/api/token-verify', { token: storedToken }, { withCredentials: true });
-        if (res.data.success) {
-          setUser(res.data.user);
-        } else {
-          localStorage.removeItem('user_token');
-        }
-      } catch (err) {
+    try {
+      const res = await axios.post('/api/token-verify', { token: storedToken }, { withCredentials: true });
+      if (res.data.success) {
+        setUser(res.data.user);
+      } else {
         localStorage.removeItem('user_token');
-      } finally {
-        setLoading(false);
-        setTokenChecked(true);
+        setUser(null); // ✅ token geçersizse user boş
       }
-    };
+    } catch (err) {
+      localStorage.removeItem('user_token');
+      setUser(null); // ✅ istek başarısızsa user boş
+    } finally {
+      setLoading(false);
+      setTokenChecked(true);
+    }
+  };
 
-    checkToken();
-  }, []);
+  checkToken();
+}, []);
   
 
   const login = async (email, password) => {

@@ -33,6 +33,10 @@ import Countdown from "../components/Countdown";
 import SoundButton from '../components/SoundButton';
 import SoundSwitch from '../components/SoundSwitch';
 import NotifySound  from '../components/NotifySound';
+import { useTheme } from "@mui/material/styles";
+import { useTranslation } from 'react-i18next';
+import { useSocket } from '../context/WebSocketContext';
+
 
 
 
@@ -58,6 +62,30 @@ export default function Lobby() {
   const [formError, setFormError] = useState(null);
 
   const [lobbyPassword, setLobbyPassword] = useState("");
+
+  const muiTheme = useTheme();
+  const { t } = useTranslation();
+  const socket = useSocket();
+
+   useEffect(() => {
+  if (!socket) return;
+
+  const handleCreate = (l) => setLobbies((p) => [l, ...p]);
+  const handleUpdate = (l) => setLobbies((p) => p.map((x) => (x.id === l.id ? l : x)));
+  const handleDelete = (id) => setLobbies((p) => p.filter((x) => x.id !== id));
+
+  socket.on('lobby:create', handleCreate);
+  socket.on('lobby:update', handleUpdate);
+  socket.on('lobby:delete', handleDelete);
+
+  return () => {
+    socket.off('lobby:create', handleCreate);
+    socket.off('lobby:update', handleUpdate);
+    socket.off('lobby:delete', handleDelete);
+  };
+}, [socket]);
+
+
 
 
   const fetchAll = async () => {
@@ -153,11 +181,16 @@ export default function Lobby() {
       setIsEvent(false);
       setStartTime('');
       setEndTime('');
-    } catch {
-      setFormError('Lobi oluşturulamadı.');
-    } finally {
-      setSubmitting(false);
-    }
+    } catch (err) {
+  if (err.response?.data?.message?.includes('Zaten aktif bir lobiniz var')) {
+    setFormError('Zaten aktif bir lobiniz var. Yeni lobi oluşturamazsınız.');
+  } else {
+    setFormError('Lobi oluşturulamadı.');
+  }
+} finally {
+  setSubmitting(false);
+}
+
   };
 
 
@@ -182,7 +215,8 @@ const lobbyCard = (lobby) => (
     }}
     secondaryAction={
       <Button variant="contained" size="small" onClick={() => navigate(`/lobby/${lobby.id}`)}>
-        Katıl
+        {t('join')}
+
       </Button>
     }
   >
@@ -197,7 +231,8 @@ const lobbyCard = (lobby) => (
       secondary={
         <>
           <span>
-           Oyun: {lobby.game}
+           {t('game')}: {lobby.game}
+
           </span>
 
           {lobby.isEvent && (
@@ -228,156 +263,177 @@ if (authLoading || !tokenOk || loading)
 
 return (
   <>
-    <Navbar />
-    <Box sx={{ minHeight: "100vh", background: "linear-gradient(145deg,#001c30 0%,#004e92 100%)", p: { xs: 2, md: 4 } }}>
-      {/* ---------- create lobby card ---------- */}
-      <Paper
-        elevation={8}
-        sx={{
-          p: { xs: 3, md: 4 },
-          borderRadius: 4,
-          maxWidth: "1100px",
-          mx: "auto",
-          background: "rgba(255,255,255,0.05)",
-          backdropFilter: "blur(12px)",
-        }}
-      >
-        <Typography variant="h5" sx={{ fontFamily: "Orbitron, sans-serif", mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
-          <SportsEsportsIcon /> Yeni Lobi Oluştur
-        </Typography>
+  <Navbar />
+  <Box
+    sx={{
+      minHeight: "100vh",
+      p: { xs: 2, md: 4 },
+      background: muiTheme.palette.mode === "dark"
+        ? "linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #0f2027)"
+        : "linear-gradient(-45deg, #e3f2fd, #e0f7fa, #ffffff, #e3f2fd)",
+      backgroundSize: "400% 400%",
+      animation: "gradientMove 18s ease infinite",
+      '@keyframes gradientMove': {
+        '0%': { backgroundPosition: '0% 50%' },
+        '50%': { backgroundPosition: '100% 50%' },
+        '100%': { backgroundPosition: '0% 50%' },
+      },
+    }}
+  >
+    {/* ---------- create lobby card ---------- */}
+    <Paper
+      elevation={8}
+      sx={{
+        p: { xs: 3, md: 4 },
+        borderRadius: 4,
+        maxWidth: "1100px",
+        mx: "auto",
+        backgroundColor: muiTheme.palette.background.paper,
+        color: muiTheme.palette.text.primary,
+        boxShadow: muiTheme.palette.mode === "dark"
+          ? "0 8px 24px rgba(0,0,0,0.3)"
+          : "0 8px 24px rgba(0,0,0,0.1)",
+        border: `1px solid ${muiTheme.palette.divider}`,
+      }}
+    >
+      <Typography variant="h5" sx={{ fontFamily: "Orbitron, sans-serif", mb: 3, display: "flex", alignItems: "center", gap: 1 }}>
+        <SportsEsportsIcon /> {t("createLobbyTitle")}
+      </Typography>
 
-        {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
+      {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
 
-        <Grid container spacing={2} alignItems="flex-end">
-          <Grid item xs={12} md={4}>
-            <TextField
-              label="Lobi Adı"
-              fullWidth
-              value={lobbyName}
-              onChange={(e) => setLobbyName(e.target.value)}
-              InputProps={{ sx: { borderRadius: 3, color: "white" } }}
-              InputLabelProps={{ sx: { color: "#b0bec5" } }}
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth sx={{ minWidth: 200 }}>
-              <InputLabel sx={{ color: "#b0bec5" }}>Oyun Seç</InputLabel>
-              <Select
-                value={selectedGame}
-                onChange={(e) => setSelectedGame(e.target.value)}
-                label="Oyun Seç"
-                sx={{ borderRadius: 3, color: "white" }}
-              >
-                <MenuItem value="" disabled>
-                  <em>Bir oyun seçin</em>
+      <Grid container spacing={2} alignItems="flex-end">
+        <Grid item xs={12} md={4}>
+          <TextField
+            label={t("lobbyName")}
+            fullWidth
+            value={lobbyName}
+            onChange={(e) => setLobbyName(e.target.value)}
+            InputProps={{ sx: { borderRadius: 3 } }}
+          />
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <FormControl fullWidth sx={{ minWidth: 200 }}>
+            <InputLabel>{t("selectGame")}</InputLabel>
+            <Select
+              value={selectedGame}
+              onChange={(e) => setSelectedGame(e.target.value)}
+              label={t("selectGame")}
+              sx={{ borderRadius: 3 }}
+            >
+              <MenuItem value="" disabled>
+                <em>{t("selectGame")}</em>
+              </MenuItem>
+              {games.map((g) => (
+                <MenuItem key={g.id} value={g.id}>
+                  {g.name}
                 </MenuItem>
-                {games.map((g) => (
-                  <MenuItem key={g.id} value={g.id}>
-                    {g.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <TextField
-              label="Oyuncu Sayısı (2-10)"
-              type="number"
-              fullWidth
-              value={maxPlayers}
-              onChange={(e) => setMaxPlayers(Math.min(10, Math.max(2, parseInt(e.target.value) || 2)))}
-              InputProps={{ sx: { borderRadius: 3, color: "white" } }}
-              InputLabelProps={{ sx: { color: "#b0bec5" } }}
-            />
-          </Grid>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <TextField
+            label={t("playerCount")}
+            type="number"
+            fullWidth
+            value={maxPlayers}
+            onChange={(e) => setMaxPlayers(Math.min(10, Math.max(2, parseInt(e.target.value) || 2)))}
+            InputProps={{ sx: { borderRadius: 3 } }}
+          />
+        </Grid>
 
-          <Grid item xs={12} md={6} lg={4}>
-            <FormControlLabel
-              control={<SoundSwitch checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} color="secondary" />}
-              label={<Typography variant="body2">🔒 Özel Lobi</Typography>}
-            />
-          </Grid>
-          <Grid item xs={12} md={6} lg={4}>
-            <FormControlLabel
-              control={<SoundSwitch checked={isEvent} onChange={(e) => setIsEvent(e.target.checked)} color="warning" />}
-              label={<Typography variant="body2">📅 Etkinlik Lobisi</Typography>}
-            />
-          </Grid>
+        <Grid item xs={12} md={6} lg={4}>
+          <FormControlLabel
+            control={<SoundSwitch checked={isPrivate} onChange={(e) => setIsPrivate(e.target.checked)} color="secondary" />}
+            label={<Typography variant="body2">🔒 {t("privateLobby")}</Typography>}
+          />
+        </Grid>
+        <Grid item xs={12} md={6} lg={4}>
+          <FormControlLabel
+            control={<SoundSwitch checked={isEvent} onChange={(e) => setIsEvent(e.target.checked)} color="warning" />}
+            label={<Typography variant="body2">📅 {t("eventLobby")}</Typography>}
+          />
+        </Grid>
 
-          {isEvent && (
-            <Grid item xs={12} lg={4} container spacing={2}>
-              <Grid item xs={12} md={6} lg={12}>
-                <TextField
-                  label="Başlangıç"
-                  type="datetime-local"
-                  fullWidth
-                  InputLabelProps={{ shrink: true, sx: { color: "#b0bec5" } }}
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  InputProps={{ sx: { borderRadius: 3, color: "white" } }}
-                />
-              </Grid>
-              <Grid item xs={12} md={6} lg={12}>
-                <TextField
-                  label="Bitiş"
-                  type="datetime-local"
-                  fullWidth
-                  InputLabelProps={{ shrink: true, sx: { color: "#b0bec5" } }}
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  InputProps={{ sx: { borderRadius: 3, color: "white" } }}
-                />
-              </Grid>
+        {isEvent && (
+          <Grid item xs={12} lg={4} container spacing={2}>
+            <Grid item xs={12} md={6} lg={12}>
+              <TextField
+                label={t("startTime")}
+                type="datetime-local"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                InputProps={{ sx: { borderRadius: 3 } }}
+              />
             </Grid>
-          )}
-          {isPrivate && (
+            <Grid item xs={12} md={6} lg={12}>
+              <TextField
+                label={t("endTime")}
+                type="datetime-local"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                InputProps={{ sx: { borderRadius: 3 } }}
+              />
+            </Grid>
+          </Grid>
+        )}
+
+        {isPrivate && (
           <Grid item xs={12} md={6} lg={4}>
             <TextField
-              label="Lobi Şifresi"
+              label={t("lobbyPassword")}
               type="password"
               fullWidth
               value={lobbyPassword}
               onChange={(e) => setLobbyPassword(e.target.value)}
-              InputProps={{ sx: { borderRadius: 3, color: "white" } }}
-              InputLabelProps={{ sx: { color: "#b0bec5" } }}
+              InputProps={{ sx: { borderRadius: 3 } }}
             />
           </Grid>
         )}
 
-          <Grid item xs={12} md={8} lg={4} sx={{ mt: { xs: 1, md: 0 } }}>
-            <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-              <SoundButton
-                variant="contained"
-                onClick={createLobby}
-                disabled={submitting}
-                sx={{ borderRadius: 3, px: 4, flexShrink: 0, background: "linear-gradient(90deg,#008cff,#7d2cff)" }}
-              >
-                {submitting ? <CircularProgress size={24} /> : "➕ Lobi Oluştur"}
-              </SoundButton>
-              <Tooltip title="Yenile">
-                <IconButton color="inherit" onClick={fetchAll}>
-                  <RefreshIcon />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Grid>
+        <Grid item xs={12} md={8} lg={4} sx={{ mt: { xs: 1, md: 0 } }}>
+          <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+            <SoundButton
+              variant="contained"
+              onClick={createLobby}
+              disabled={submitting}
+              sx={{
+                borderRadius: 3,
+                px: 4,
+                flexShrink: 0,
+                background: "linear-gradient(90deg,#008cff,#7d2cff)"
+              }}
+            >
+              {submitting ? <CircularProgress size={24} /> : t("createLobbyBtn")}
+            </SoundButton>
+            <Tooltip title={t("refreshTooltip")}>
+              <IconButton color="inherit" onClick={fetchAll}>
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Grid>
-      </Paper>
+      </Grid>
+    </Paper>
 
-      {/* ---------- lobby list ---------- */}
-      <Box mt={6} maxWidth="1100px" mx="auto">
-        <Typography variant="h5" color="#ffa700" sx={{ mb: 2, fontFamily: "Orbitron, sans-serif" }}>
-          Aktif Lobiler ({lobbies.length})
-        </Typography>
+    {/* ---------- lobby list ---------- */}
+    <Box mt={6} maxWidth="1100px" mx="auto">
+      <Typography variant="h5" color="#ffa700" sx={{ mb: 2, fontFamily: "Orbitron, sans-serif" }}>
+        {t("activeLobbiesCount", { count: lobbies.length })}
+      </Typography>
 
-        {lobbies.length === 0 && <Alert severity="info">Henüz lobi yok</Alert>}
+      {lobbies.length === 0 && <Alert severity="info">{t("noLobbies")}</Alert>}
 
-        <List sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {lobbies.map((l) => lobbyCard(l))}
-        </List>
-      </Box>
+      <List sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {lobbies.map((l) => lobbyCard(l))}
+      </List>
     </Box>
-  </>
+  </Box>
+</>
 );
-}
-
+};

@@ -12,10 +12,15 @@ import {
   List,
   ListItem,
   ListItemText,
+  Tooltip
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useThemeMode } from "../context/ThemeModeContext";
+import { useTranslation } from "react-i18next";
 
 function HideOnScroll({ children }) {
   const trigger = useScrollTrigger();
@@ -30,6 +35,8 @@ function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const { mode, toggleTheme } = useThemeMode();
+  const { t, i18n } = useTranslation();
 
   const handleLogout = async () => {
     try {
@@ -41,30 +48,34 @@ function Navbar() {
     }
   };
 
-  const userDisplayName = user?.email?.split("@")[0] || "Kullanıcı";
+  const userDisplayName = user?.email?.split("@")[0] || t("user");
+
+  const toggleLanguage = () => {
+    const nextLang = i18n.language === "tr" ? "en" : "tr";
+    i18n.changeLanguage(nextLang);
+  };
 
   return (
     <HideOnScroll>
       <AppBar
         position="sticky"
         sx={{
-          background: "rgba(44, 83, 100, 0.9)",
+          backgroundColor: mode === "dark" ? "#1e1e1e" : "#1565c0",
           backdropFilter: "blur(6px)",
           WebkitBackdropFilter: "blur(6px)",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.3)"
         }}
-        elevation={4}
       >
-        <Toolbar>
+        <Toolbar sx={{ justifyContent: "space-between" }}>
           <Typography
             variant="h5"
             component={RouterLink}
             to={user ? "/home" : "/login"}
             sx={{
-              flexGrow: 1,
               fontFamily: "Orbitron, sans-serif",
               fontWeight: "bold",
               color: "white",
-              textDecoration: "none",
+              textDecoration: "none"
             }}
           >
             GameCenter
@@ -73,9 +84,30 @@ function Navbar() {
           <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 1 }}>
             {user && (
               <Button color="inherit" component={RouterLink} to="/home">
-                Ana Sayfa
+                {t("home")}
               </Button>
             )}
+
+            <Tooltip title={t("theme")}>
+              <IconButton color="inherit" onClick={toggleTheme}>
+                {mode === "dark" ? <Brightness7Icon /> : <Brightness4Icon />}
+              </IconButton>
+            </Tooltip>
+
+            <Button
+              onClick={toggleLanguage}
+              color="inherit"
+              sx={{
+                fontWeight: "bold",
+                border: "1px solid white",
+                borderRadius: "20px",
+                px: 1.5,
+                minWidth: 40
+              }}
+            >
+              {i18n.language === "tr" ? "ENG" : "TR"}
+            </Button>
+
             {user ? (
               <>
                 <Typography sx={{ color: "#e0e0e0" }}>👤 {userDisplayName}</Typography>
@@ -85,7 +117,7 @@ function Navbar() {
                   variant="outlined"
                   sx={{ borderColor: "#e0e0e0", color: "#e0e0e0" }}
                 >
-                  Çıkış Yap
+                  {t("logout")}
                 </Button>
               </>
             ) : (
@@ -96,7 +128,7 @@ function Navbar() {
                 variant="outlined"
                 sx={{ borderColor: "#e0e0e0", color: "#e0e0e0" }}
               >
-                Giriş Yap
+                {t("login")}
               </Button>
             )}
           </Box>
@@ -110,17 +142,23 @@ function Navbar() {
           </IconButton>
 
           <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-            <List sx={{ width: 200 }}>
+            <List sx={{ width: 220 }}>
               {user && (
                 <ListItem button component={RouterLink} to="/home" onClick={() => setDrawerOpen(false)}>
-                  <ListItemText primary="Ana Sayfa" />
+                  <ListItemText primary={t("home")} />
                 </ListItem>
               )}
               <ListItem>
                 <ListItemText primary={`👤 ${userDisplayName}`} />
               </ListItem>
               <ListItem button onClick={user ? handleLogout : () => navigate("/login")}>
-                <ListItemText primary={user ? "Çıkış Yap" : "Giriş Yap"} />
+                <ListItemText primary={user ? t("logout") : t("login")} />
+              </ListItem>
+              <ListItem button onClick={toggleTheme}>
+                <ListItemText primary={mode === "dark" ? t("light") : t("dark")} />
+              </ListItem>
+              <ListItem button onClick={toggleLanguage}>
+                <ListItemText primary={i18n.language === "tr" ? "ENG" : "TR"} />
               </ListItem>
             </List>
           </Drawer>

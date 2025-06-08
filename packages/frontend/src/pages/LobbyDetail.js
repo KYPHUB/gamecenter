@@ -32,7 +32,6 @@ import { useSocket } from '../context/WebSocketContext';
 
 
 
-
 function LobbyDetail() {
   const { id: lobbyId } = useParams();
   const navigate = useNavigate();
@@ -195,6 +194,19 @@ const handleUpdateLobby = async () => {
     check();
   }, []);
 
+  useEffect(() => {
+  if (!socket || !lobbyId) return;
+
+  const handleStart = () => {
+    console.log('🚀 tombala:start alındı → oyuna yönleniyor...');
+    navigate(`/tombala/play/${lobbyId}`);
+  };
+
+  socket.on('tombala:start', handleStart);
+  return () => socket.off('tombala:start', handleStart);
+}, [socket, lobbyId, navigate]);
+
+
  useEffect(() => {
   if (copySuccess) NotifySound();
 }, [copySuccess]);
@@ -253,6 +265,12 @@ useEffect(() => {
     setDeleteDialogOpen(false);
   }
 };
+
+useEffect(() => {
+  if (!socket || !lobbyId) return;
+  console.log('📡 Katılımcı WS ile lobby\'e katılıyor:', lobbyId);
+  socket.emit('join-lobby', lobbyId);
+}, [socket, lobbyId])
 
 
   const joinLobby = async () => {
@@ -639,6 +657,18 @@ const expireTime = lobby.creatorLeftAt
           </SoundButton>
         </DialogActions>
       </Dialog>
+
+      {isOwner && lobby.gameId === 'tombala' && (
+  <Button
+    variant="contained"
+    size="large"
+    color="success"
+    onClick={() => navigate(`/tombala/menu/${lobby.id}`)}
+  >
+    Oyunu Başlat
+  </Button>
+)}
+
 
       {/* ======= Düzenleme Dialog ======= */}
       <Dialog

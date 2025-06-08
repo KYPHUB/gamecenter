@@ -22,6 +22,9 @@ import HistoryIcon from '@mui/icons-material/History';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'; // Nasıl Oynanır için
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
+import { MenuPage, GamePage } from '@gamecenter/tombala';
+
+
 
 // Temel Neon Renkleri
 const NEON_CYAN = '#00eaff';
@@ -175,7 +178,7 @@ const getToggleButtonSx = (value, selectedValue, color, hoverColor) => ({
   const pageBackground = game?.image 
     ? `url(${game.image})` 
     : 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)';
-
+    
 return (
   <>
     <Navbar />
@@ -342,6 +345,7 @@ return (
                 {t(`gameDescriptions.${game.id}`)}
               </Typography>
             </Box>
+            
 
             {/* Ayarlar */}
             <Box sx={getPanelBaseSx(NEON_GREEN)}>
@@ -429,7 +433,32 @@ return (
                 </Stack>
               </Stack>
             </Box>
+            {game.id === "tombala" && (
+  <Box sx={{ mt: 2, textAlign: 'center' }}>
+    <Button
+      onClick={() => navigate('/tombala/play')}
+      variant="contained"
+      size="large"
+      sx={{
+        px: 5,
+        fontWeight: 'bold',
+        borderRadius: 10,
+        background: muiTheme.palette.mode === 'dark'
+          ? 'linear-gradient(90deg, #00c9ff, #92fe9d)'
+          : 'linear-gradient(90deg, #2196f3, #90caf9)',
+        color: '#1c1c1c',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        '&:hover': {
+          filter: 'brightness(1.1)',
+        },
+      }}
+    >
+      Oynamaya Başla
+    </Button>
+  </Box>
+)}
 
+            
             {/* Geçmiş */}
             <Box sx={getPanelBaseSx(NEON_YELLOW)}>
               <Stack direction="row" alignItems="center" spacing={1.5} mb={1.5}>

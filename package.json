@@ -4,7 +4,9 @@
   "devDependencies": {
     "lerna": "^8.2.2"
   },
-  "workspaces": [
-    "packages/*"
-  ]
+  
+   "workspaces": [
+     "packages/*",
+   "../tombala-game"
+   ]
 }

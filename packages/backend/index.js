@@ -39,7 +39,28 @@ io.on('connection', (socket) => {
   const user = socket.handshake.session?.user;
   if (!user) return socket.disconnect(true);
   console.log('🔌 WebSocket bağlantısı:', user.email);
+
+  socket.on("join-lobby", (lobbyId) => {
+    socket.join(lobbyId);
+    console.log(`➡️  ${user.email} joined lobby ${lobbyId}`);
+  });
+
+  socket.on("tombala:draw", ({ lobbyId, number }) => {
+    console.log(`🎯 ${user.email} çekti: ${number} (lobi ${lobbyId})`);
+    io.to(lobbyId).emit("tombala:draw", number);
+  });
+
+  socket.on("tombala:start", (lobbyId) => {
+    console.log(`🚀 Oyun başlatıldı → Lobby ${lobbyId}`);
+    io.to(lobbyId).emit("tombala:start");
+  });
+
+  socket.on("disconnect", () => {
+    console.log('❌ Socket ayrıldı:', user.email);
+  });
 });
+
+
 
 /* ----------------------------- Dummy Veriler ------------------------------ */
 const DUMMY_USER = {
@@ -128,7 +149,14 @@ const allGames = [
     name: 'Tower Dash',
     image: '/images/tower-dash.jpg',
     description: 'Yüksek bir kulede yukarı doğru zıplayarak ilerle...'
-  }
+  },
+  {
+  id: 'tombala',
+  name: 'Tombala',
+  image: '/images/tombala.jpg',
+  description: 'Klasik tombala oyunu. Şansını dene ve rakiplerinden önce çinko yap!'
+}
+
 ];
 
 
@@ -349,7 +377,8 @@ app.post('/api/lobbies/:id/join', authMiddleware, (req, res) => {
   if (!lobby.participants.includes(userEmail)) {
     lobby.participants.push(userEmail);
     lobby.currentPlayers++;
-    io.emit('player:join', { lobbyId: lobby.id, email: userEmail });
+    io.to(lobby.id).emit('player:join', { lobbyId: lobby.id, email: userEmail });
+
   }
 
   res.json({ success: true, participants: lobby.participants });

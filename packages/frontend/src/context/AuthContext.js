@@ -11,36 +11,36 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [tokenChecked, setTokenChecked] = useState(false);
 
-  
+  // Uygulama yüklendiğinde token kontrolü yap
   useEffect(() => {
-  const checkToken = async () => {
-    const storedToken = localStorage.getItem('user_token');
-    if (!storedToken) {
-      setUser(null); // ✅ token yoksa user boş
-      setLoading(false);
-      setTokenChecked(true);
-      return;
-    }
-
-    try {
-      const res = await axios.post('/api/token-verify', { token: storedToken }, { withCredentials: true });
-      if (res.data.success) {
-        setUser(res.data.user);
-      } else {
-        localStorage.removeItem('user_token');
-        setUser(null); // ✅ token geçersizse user boş
+    const checkToken = async () => {
+      const storedToken = localStorage.getItem('user_token');
+      if (!storedToken) {
+        setUser(null);
+        setLoading(false);
+        setTokenChecked(true);
+        return;
       }
-    } catch (err) {
-      localStorage.removeItem('user_token');
-      setUser(null); // ✅ istek başarısızsa user boş
-    } finally {
-      setLoading(false);
-      setTokenChecked(true);
-    }
-  };
 
-  checkToken();
-}, []);
+      try {
+        const res = await axios.post('/api/token-verify', { token: storedToken }, { withCredentials: true });
+        if (res.data.success) {
+          setUser(res.data.user);
+        } else {
+          localStorage.removeItem('user_token');
+          setUser(null);
+        }
+      } catch (err) {
+        localStorage.removeItem('user_token');
+        setUser(null);
+      } finally {
+        setLoading(false);
+        setTokenChecked(true);
+      }
+    };
+
+    checkToken();
+  }, []);
   
 
   const login = async (email, password) => {
@@ -53,15 +53,16 @@ export const AuthProvider = ({ children }) => {
 
       setUser(res.data.user);
 
+      // Sunucudan token gelmezse, istemci tarafında bir tane oluştur (fallback)
       const token = res.data.token || sha256(email + TOKEN_SECRET).toString();
       localStorage.setItem('user_token', token);
 
       if (localStorage.getItem('rememberMe') === 'true') {
-      localStorage.setItem('rememberedUser', JSON.stringify({
-      email,
-      token
-    }));
-}
+        localStorage.setItem('rememberedUser', JSON.stringify({
+          email,
+          token
+        }));
+      }
 
       return res.data;
     } catch (err) {

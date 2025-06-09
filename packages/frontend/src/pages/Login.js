@@ -33,6 +33,7 @@ export default function Login() {
 
 
   useEffect(() => {
+    // Başka bir sayfadan yönlendirme ile gelen oturum hatasını kontrol et
     if (sessionStorage.getItem('loginError') === '1') {
       setError('⚠️ Oturum süresi doldu veya geçersiz. Lütfen tekrar giriş yapın.');
       sessionStorage.removeItem('loginError');
@@ -51,10 +52,10 @@ export default function Login() {
   }, []);
 
   useEffect(() => {
-  if (showSnackbar) {
-    NotifySound(); 
-  }
-}, [showSnackbar]);
+    if (showSnackbar) {
+      NotifySound(); 
+    }
+  }, [showSnackbar]);
 
   useEffect(() => {
     const saved = localStorage.getItem('rememberedEmail');
@@ -66,29 +67,26 @@ export default function Login() {
   
 
   const handleQuickLogin = async () => {
-  if (!rememberedUser) return;
-  try {
-    const response = await axios.post('/api/token-verify', {
-      token: rememberedUser.token
-    }, { withCredentials: true });
+    if (!rememberedUser) return;
+    try {
+      const response = await axios.post('/api/token-verify', {
+        token: rememberedUser.token
+      }, { withCredentials: true });
 
-    if (response.data.success) {
-      // Kullanıcıyı tanıt (elle oturumu başlat)
-      localStorage.setItem('user_token', rememberedUser.token);
-
-      // ✅ Kullanıcıyı set etmek için logout → ardından token zaten kontrol edilecek
-      window.location.href = '/home'; // Hard redirect ile tüm context tetiklenir
-    } else {
-      setError('⚠️ Hızlı giriş başarısız oldu. Lütfen tekrar giriş yapın.');
+      if (response.data.success) {
+        localStorage.setItem('user_token', rememberedUser.token);
+        window.location.href = '/home'; // Hard redirect ile tüm context'in yeniden yüklenmesini sağla
+      } else {
+        setError('⚠️ Hızlı giriş başarısız oldu. Lütfen tekrar giriş yapın.');
+        localStorage.removeItem('rememberedUser');
+        setRememberedUser(null);
+      }
+    } catch (err) {
+      setError('⚠️ Otomatik giriş sırasında hata oluştu.');
       localStorage.removeItem('rememberedUser');
       setRememberedUser(null);
     }
-  } catch (err) {
-    setError('⚠️ Otomatik giriş sırasında hata oluştu.');
-    localStorage.removeItem('rememberedUser');
-    setRememberedUser(null);
-  }
-};
+  };
 
 
   const handleSubmit = async e => {
@@ -245,7 +243,6 @@ export default function Login() {
             />
           )}
           
-
           {/* Beni Hatırla */}
           {!forgotMode && (
             <FormControlLabel
@@ -355,33 +352,33 @@ export default function Login() {
       {/* Hızlı Giriş Butonu */}
       {rememberedUser && (
         <Box
-  sx={{
-    position: 'fixed',
-    bottom: 24,
-    right: 24,
-    backgroundColor: '#26a69a',
-    color: '#fff',
-    fontWeight: 600,
-    fontSize: 22,
-    width: 100,
-    height: 100,
-    borderRadius: 6, // 🔁 kavisli köşeler için
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
-    cursor: 'pointer',
-    zIndex: 9999,
-    transition: '0.3s',
-    '&:hover': {
-      backgroundColor: '#00796b'
-    }
-  }}
-  title={`Hızlı giriş: ${rememberedUser.email}`}
-  onClick={handleQuickLogin}
->
-  {rememberedUser.email.charAt(0).toUpperCase()}
-</Box>
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            backgroundColor: '#26a69a',
+            color: '#fff',
+            fontWeight: 600,
+            fontSize: 22,
+            width: 100,
+            height: 100,
+            borderRadius: 6,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
+            cursor: 'pointer',
+            zIndex: 9999,
+            transition: '0.3s',
+            '&:hover': {
+              backgroundColor: '#00796b'
+            }
+          }}
+          title={`Hızlı giriş: ${rememberedUser.email}`}
+          onClick={handleQuickLogin}
+        >
+          {rememberedUser.email.charAt(0).toUpperCase()}
+        </Box>
       )}
     </Box>
   );

@@ -2,49 +2,39 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Button, CircularProgress, Alert, Switch, ToggleButton, ToggleButtonGroup,
-  Container, Stack, Paper, // Paper eklendi
+  Container, Stack, Paper,
 } from '@mui/material';
-// Accordion, Grid, Slider, Divider, Tooltip, ExpandMoreIcon, InfoOutlinedIcon orijinal kodda vardı ama kullanılmıyordu, şimdilik çıkardım.
-// Gerekirse eklenebilir.
 
-import Navbar from '../components/Navbar'; // Yolun doğru olduğundan emin olun
+import Navbar from '../components/Navbar';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext'; // Yolun doğru olduğundan emin olun
-import { motion, AnimatePresence } from 'framer-motion'; // AnimatePresence eklendi
+import { useAuth } from '../context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// MUI İkonları (Önceki önerilerimden)
-import SportsEsportsIcon from '@mui/icons-material/SportsEsports'; // Oyna butonu için
+import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
 import SettingsIcon from '@mui/icons-material/Settings';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import PaletteIcon from '@mui/icons-material/Palette';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import HistoryIcon from '@mui/icons-material/History';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline'; // Nasıl Oynanır için
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
 import { MenuPage, GamePage } from '@gamecenter/tombala';
 
 
-
-// Temel Neon Renkleri
 const NEON_CYAN = '#00eaff';
 const NEON_GREEN = '#7CFC00';
 const NEON_YELLOW = '#ffcc70';
 const NEON_ORANGE = '#ffa500';
-const NEON_RED = '#ff3c3c'; // Orijinal kırmızı
-const NEON_PINK_ACCENT = '#FF69B4'; // Vurgu için
+const NEON_RED = '#ff3c3c';
+const NEON_PINK_ACCENT = '#FF69B4';
 
-// Panel Stilleri için Yardımcı Fonksiyonlar ve Sabitler
-const PANEL_TRANSITION = 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'; // Daha yumuşak bir geçiş
-const PANEL_BORDER_RADIUS = 4; // 16px (MUI tema spacing(4))
-const PANEL_BACKGROUND_COLOR = 'rgba(15, 32, 47, 0.7)'; // Daha koyu ve tematik
-const PANEL_BACKDROP_FILTER = 'blur(10px) saturate(120%)'; // Saturasyon eklendi
+const PANEL_TRANSITION = 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
+const PANEL_BORDER_RADIUS = 4;
+const PANEL_BACKGROUND_COLOR = 'rgba(15, 32, 47, 0.7)';
+const PANEL_BACKDROP_FILTER = 'blur(10px) saturate(120%)';
 const PANEL_BOX_SHADOW_DEFAULT = '0 4px 15px rgba(0,0,0,0.3)';
 const PANEL_BOX_SHADOW_HOVER = '0 8px 30px rgba(0,0,0,0.4)';
-
-
-
-
 
 
 function GameDetail() {
@@ -62,56 +52,75 @@ function GameDetail() {
   const [difficulty, setDifficulty] = useState('easy');
   const muiTheme = useTheme();
   const { t } = useTranslation();
-  // Orijinal useEffect yapıları korunuyor
+  const [relatedLobbies, setRelatedLobbies] = useState([]);
+  const [lobbies, setLobbies] = useState([]);
 
+  useEffect(() => {
+    // Bu oyuna ait aktif lobileri çek
+    const fetchRelatedLobbies = async () => {
+      try {
+        const res = await axios.get('/api/lobbies', { withCredentials: true });
+        const filtered = res.data.filter(l => l.gameId?.toLowerCase() === gameId?.toLowerCase());
+        setRelatedLobbies(filtered);
+      } catch (err) {
+        console.error('Lobiler alınamadı:', err);
+      }
+    };
+
+    if (tokenVerified && gameId) fetchRelatedLobbies();
+  }, [tokenVerified, gameId]);
+
+
+  // Paneller için temel stil objesi üreten fonksiyon
   const getPanelBaseSx = (borderColor) => ({
-  p: { xs: 2.5, md: 3.5 },
-  borderRadius: 4,
-  background: muiTheme.palette.mode === 'dark'
-    ? 'rgba(15, 32, 47, 0.7)'
-    : '#f7fafd',
-  border: muiTheme.palette.mode === 'dark'
-    ? `1px solid ${borderColor}60`
-    : `1px solid rgba(0,0,0,0.08)`,
-  boxShadow: muiTheme.palette.mode === 'dark'
-    ? `0 4px 15px rgba(0,0,0,0.3), 0 0 5px ${borderColor}20 inset`
-    : '0 4px 12px rgba(0,0,0,0.05)',
-  backdropFilter: muiTheme.palette.mode === 'dark' ? 'blur(10px) saturate(120%)' : 'none',
-  transition: 'all 0.3s ease-in-out',
-  overflow: 'hidden',
-  '&:hover': {
-    transform: 'translateY(-3px)',
+    p: { xs: 2.5, md: 3.5 },
+    borderRadius: 4,
+    background: muiTheme.palette.mode === 'dark'
+      ? 'rgba(15, 32, 47, 0.7)'
+      : '#f7fafd',
+    border: muiTheme.palette.mode === 'dark'
+      ? `1px solid ${borderColor}60`
+      : `1px solid rgba(0,0,0,0.08)`,
     boxShadow: muiTheme.palette.mode === 'dark'
-      ? `0 8px 30px rgba(0,0,0,0.4), 0 0 10px ${borderColor}40 inset`
-      : '0 8px 24px rgba(0,0,0,0.08)',
-    borderColor: muiTheme.palette.mode === 'dark'
-      ? `${borderColor}90`
-      : 'rgba(0,0,0,0.12)',
-  },
-});
+      ? `0 4px 15px rgba(0,0,0,0.3), 0 0 5px ${borderColor}20 inset`
+      : '0 4px 12px rgba(0,0,0,0.05)',
+    backdropFilter: muiTheme.palette.mode === 'dark' ? 'blur(10px) saturate(120%)' : 'none',
+    transition: 'all 0.3s ease-in-out',
+    overflow: 'hidden',
+    '&:hover': {
+      transform: 'translateY(-3px)',
+      boxShadow: muiTheme.palette.mode === 'dark'
+        ? `0 8px 30px rgba(0,0,0,0.4), 0 0 10px ${borderColor}40 inset`
+        : '0 8px 24px rgba(0,0,0,0.08)',
+      borderColor: muiTheme.palette.mode === 'dark'
+        ? `${borderColor}90`
+        : 'rgba(0,0,0,0.12)',
+    },
+  });
 
-const getToggleButtonSx = (value, selectedValue, color, hoverColor) => ({
-  color: selectedValue === value ? color : '#b0bec5', // Seçili olmayan renk ayarlandı
-  borderColor: selectedValue === value ? `${color}cc` : 'rgba(176, 190, 197, 0.3)',
-  transition: PANEL_TRANSITION,
-  flexGrow: 1, // Eşit genişlik için
-  py: 0.8, // Düğme yüksekliği
-  fontSize: '0.8rem',
-  '&.Mui-selected': {
-    backgroundColor: `${color}30`,
-    color: color,
-    boxShadow: `0 0 12px ${color}, 0 0 18px ${color}b3`,
-    borderColor: `${color}ff`,
-    zIndex: 1, // Seçili olan öne çıksın
-  },
-  '&:hover': {
-    backgroundColor: `${(hoverColor || color)}20`,
-    borderColor: (hoverColor || color),
-    zIndex: 2, // Hover olan öne çıksın
-  },
-});
+  // Toggle butonları için dinamik stil objesi üreten fonksiyon
+  const getToggleButtonSx = (value, selectedValue, color, hoverColor) => ({
+    color: selectedValue === value ? color : '#b0bec5',
+    borderColor: selectedValue === value ? `${color}cc` : 'rgba(176, 190, 197, 0.3)',
+    transition: PANEL_TRANSITION,
+    flexGrow: 1,
+    py: 0.8,
+    fontSize: '0.8rem',
+    '&.Mui-selected': {
+      backgroundColor: `${color}30`,
+      color: color,
+      boxShadow: `0 0 12px ${color}, 0 0 18px ${color}b3`,
+      borderColor: `${color}ff`,
+      zIndex: 1,
+    },
+    '&:hover': {
+      backgroundColor: `${(hoverColor || color)}20`,
+      borderColor: (hoverColor || color),
+      zIndex: 2,
+    },
+  });
 
-
+  // Sayfa yüklenirken token'ı doğrula
   useEffect(() => {
     const check = async () => {
       const valid = await verifyToken();
@@ -122,13 +131,14 @@ const getToggleButtonSx = (value, selectedValue, color, hoverColor) => ({
       }
     };
     check();
-  }, [verifyToken, navigate]); // Bağımlılıklar güncellendi
+  }, [verifyToken, navigate]);
 
+  // Token doğrulandıktan sonra oyun detaylarını çek
   useEffect(() => {
-    if (!tokenVerified) return; // Token doğrulanmadan fetch yapma
+    if (!tokenVerified) return;
 
     const fetchGame = async () => {
-      setLoading(true); // Her gameId değişiminde yüklemeyi başlat
+      setLoading(true);
       try {
         const response = await axios.get(`/api/games/${gameId}`, { withCredentials: true });
         setGame(response.data);
@@ -143,9 +153,9 @@ const getToggleButtonSx = (value, selectedValue, color, hoverColor) => ({
     };
 
     fetchGame();
-  }, [gameId, tokenVerified]); // tokenVerified eklendi
+  }, [gameId, tokenVerified]);
 
-  // Yükleme ve hata durumları için UI
+
   if (loading) {
     return (
       <>
@@ -172,12 +182,7 @@ const getToggleButtonSx = (value, selectedValue, color, hoverColor) => ({
     );
   }
 
-  if (!tokenVerified) return null; // Token doğrulanmadıysa hiçbir şey render etme
-
-  // Arka plan için dinamik stil
-  const pageBackground = game?.image 
-    ? `url(${game.image})` 
-    : 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)';
+  if (!tokenVerified) return null; // Token doğrulanana kadar boş render et
     
 return (
   <>
@@ -217,7 +222,6 @@ return (
           gap: { xs: 4, sm: 5, md: 6 },
         }}
       >
-        {/* Sol Panel */}
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
@@ -297,7 +301,7 @@ return (
               }}
             >
               <Button
-                onClick={() => navigate('/lobby')}
+                  onClick={() => navigate('/lobby', { state: { selectedGame: game.id } })}
                 variant="contained"
                 size="large"
                 sx={{
@@ -319,7 +323,7 @@ return (
             </motion.div>
           </Paper>
         </motion.div>
-                {/* Sağ Panel */}
+        
         <motion.div
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
@@ -327,7 +331,6 @@ return (
           style={{ flex: 1.3, minWidth: 300, maxWidth: 520 }}
         >
           <Stack spacing={3}>
-            {/* Nasıl Oynanır */}
             <Box sx={getPanelBaseSx(NEON_CYAN)}>
               <Stack direction="row" alignItems="center" spacing={1.5} mb={1.5}>
                 <HelpOutlineIcon sx={{ color: NEON_CYAN, fontSize: '1.8rem' }} />
@@ -346,8 +349,6 @@ return (
               </Typography>
             </Box>
             
-
-            {/* Ayarlar */}
             <Box sx={getPanelBaseSx(NEON_GREEN)}>
               <Stack direction="row" alignItems="center" spacing={1.5} mb={2}>
                 <SettingsIcon sx={{ color: NEON_GREEN, fontSize: '1.8rem' }} />
@@ -356,7 +357,6 @@ return (
                 </Typography>
               </Stack>
               <Stack spacing={3}>
-                {/* Ses */}
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <VolumeUpIcon sx={{ color: muiTheme.palette.text.secondary }} />
@@ -381,7 +381,6 @@ return (
                   />
                 </Stack>
 
-                {/* Tema */}
                 <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" rowGap={1.5}>
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <PaletteIcon sx={{ color: muiTheme.palette.text.secondary }} />
@@ -405,7 +404,6 @@ return (
                   </ToggleButtonGroup>
                 </Stack>
 
-                {/* Zorluk */}
                 <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" rowGap={1.5}>
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <LocalFireDepartmentIcon sx={{ color: muiTheme.palette.text.secondary }} />
@@ -433,33 +431,97 @@ return (
                 </Stack>
               </Stack>
             </Box>
-            {game.id === "tombala" && (
-  <Box sx={{ mt: 2, textAlign: 'center' }}>
-    <Button
-      onClick={() => navigate('/tombala/play')}
-      variant="contained"
-      size="large"
-      sx={{
-        px: 5,
-        fontWeight: 'bold',
-        borderRadius: 10,
-        background: muiTheme.palette.mode === 'dark'
-          ? 'linear-gradient(90deg, #00c9ff, #92fe9d)'
-          : 'linear-gradient(90deg, #2196f3, #90caf9)',
-        color: '#1c1c1c',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        '&:hover': {
-          filter: 'brightness(1.1)',
-        },
-      }}
-    >
-      Oynamaya Başla
-    </Button>
-  </Box>
-)}
-
             
-            {/* Geçmiş */}
+            {game.id === "tombala" && (
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <Button
+                  onClick={() => navigate('/tombala/play')}
+                  variant="contained"
+                  size="large"
+                  sx={{
+                    px: 5,
+                    fontWeight: 'bold',
+                    borderRadius: 10,
+                    background: muiTheme.palette.mode === 'dark'
+                      ? 'linear-gradient(90deg, #00c9ff, #92fe9d)'
+                      : 'linear-gradient(90deg, #2196f3, #90caf9)',
+                    color: '#1c1c1c',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    '&:hover': {
+                      filter: 'brightness(1.1)',
+                    },
+                  }}
+                >
+                  Oynamaya Başla
+                </Button>
+              </Box>
+            )}
+
+            {relatedLobbies.length > 0 && (
+              <Box
+                sx={{
+                  mt: 3,
+                  p: 2.5,
+                  borderRadius: 3,
+                  border: `1px solid ${NEON_ORANGE}66`,
+                  background: muiTheme.palette.mode === 'dark'
+                    ? 'rgba(255, 165, 0, 0.05)'
+                    : '#fffaf0',
+                  boxShadow: muiTheme.palette.mode === 'dark'
+                    ? `0 0 12px ${NEON_ORANGE}44`
+                    : '0 0 6px rgba(0,0,0,0.05)'
+                }}
+              >
+                <Stack direction="row" alignItems="center" spacing={1.5} mb={1.5}>
+                  <SportsEsportsIcon sx={{ color: NEON_ORANGE }} />
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: NEON_ORANGE }}>
+                    Bu oyun için aktif lobiler
+                  </Typography>
+                </Stack>
+
+                {relatedLobbies.map((lobby) => (
+                  <Paper
+                    key={lobby.id}
+                    sx={{
+                      mb: 2,
+                      p: 2,
+                      borderRadius: 2,
+                      backgroundColor: muiTheme.palette.mode === 'dark'
+                        ? 'rgba(255,255,255,0.05)'
+                        : '#f9f9f9',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <Box>
+                      <Typography fontWeight="bold" color="text.primary">
+                        {lobby.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Oyuncular: {lobby.currentPlayers}/{lobby.maxPlayers}
+                      </Typography>
+                    </Box>
+                    <Button
+                      onClick={() => navigate(`/lobby/${lobby.id}`)}
+                      size="small"
+                      variant="contained"
+                      sx={{
+                        borderRadius: 2,
+                        fontWeight: 600,
+                        px: 3,
+                        background: 'linear-gradient(90deg, #ffa500, #ffcc70)',
+                        color: '#1c1c1c',
+                        '&:hover': { filter: 'brightness(1.1)' }
+                      }}
+                    >
+                      Katıl
+                    </Button>
+                  </Paper>
+                ))}
+              </Box>
+            )}
+            
             <Box sx={getPanelBaseSx(NEON_YELLOW)}>
               <Stack direction="row" alignItems="center" spacing={1.5} mb={1.5}>
                 <HistoryIcon sx={{ color: NEON_YELLOW, fontSize: '1.8rem' }} />
@@ -485,4 +547,4 @@ return (
 );
 }
 
-export default GameDetail
+export default GameDetail;

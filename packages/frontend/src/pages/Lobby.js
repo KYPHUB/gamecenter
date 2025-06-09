@@ -36,6 +36,8 @@ import NotifySound  from '../components/NotifySound';
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from 'react-i18next';
 import { useSocket } from '../context/WebSocketContext';
+import { useLocation } from "react-router-dom";
+
 
 
 
@@ -62,6 +64,8 @@ export default function Lobby() {
   const [formError, setFormError] = useState(null);
 
   const [lobbyPassword, setLobbyPassword] = useState("");
+  const location = useLocation();
+
 
   const muiTheme = useTheme();
   const { t } = useTranslation();
@@ -109,6 +113,9 @@ export default function Lobby() {
       if (!(await verifyToken())) return navigate("/login", { replace: true });
       setTokenOk(true);
       fetchAll();
+       if (location.state?.selectedGame) {
+      setSelectedGame(location.state.selectedGame);
+    }
     })();
   }, []);
 
@@ -195,7 +202,7 @@ export default function Lobby() {
 
 
 
-/* ------------------- render helpers ----------------------- */
+/* ------------------- render yardımcılarını bu kısıma koydum ! ----------------------- */
 const isEventSoon = (startISO) => {
   const diff = new Date(startISO) - new Date();
   return diff <= 24 * 60 * 60 * 1000 && diff > 0;
@@ -421,7 +428,7 @@ return (
       </Grid>
     </Paper>
 
-    {/* ---------- lobby list ---------- */}
+    {/* ---------- lobi listesi ---------- */}
     <Box mt={6} maxWidth="1100px" mx="auto">
       <Typography variant="h5" color="#ffa700" sx={{ mb: 2, fontFamily: "Orbitron, sans-serif" }}>
         {t("activeLobbiesCount", { count: lobbies.length })}

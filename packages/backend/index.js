@@ -46,13 +46,14 @@ io.on('connection', (socket) => {
   });
 
   socket.on("tombala:draw", ({ lobbyId, number }) => {
-    console.log(`🎯 ${user.email} çekti: ${number} (lobi ${lobbyId})`);
-    io.to(lobbyId).emit("tombala:draw", number);
-  });
+  io.to(lobbyId).emit("tombala:draw", { lobbyId, number });
+});
+
+
 
   socket.on("tombala:start", (lobbyId) => {
     console.log(`🚀 Oyun başlatıldı → Lobby ${lobbyId}`);
-    io.to(lobbyId).emit("tombala:start");
+    io.to(lobbyId).emit("tombala:start",lobbyId);
   });
 
   socket.on("disconnect", () => {
@@ -78,6 +79,13 @@ const SECOND_USER = {
 };
 
 const allGames = [
+  {
+  id: 'tombala',
+  name: 'Tombala',
+  image: '/images/tombala.jpg',
+  description: 'Klasik tombala oyunu. Şansını dene ve rakiplerinden önce çinko yap!'
+},
+
   {
     id: 'pixel-runner',
     name: 'Pixel Runner',
@@ -144,19 +152,7 @@ const allGames = [
     image: '/images/city-defender.jpg',
     description: 'Şehrin son savunma hattı sensin. Dronlara karşı savunma kur...'
   },
-  {
-    id: 'tower-dash',
-    name: 'Tower Dash',
-    image: '/images/tower-dash.jpg',
-    description: 'Yüksek bir kulede yukarı doğru zıplayarak ilerle...'
-  },
-  {
-  id: 'tombala',
-  name: 'Tombala',
-  image: '/images/tombala.jpg',
-  description: 'Klasik tombala oyunu. Şansını dene ve rakiplerinden önce çinko yap!'
-}
-
+  
 ];
 
 

@@ -437,7 +437,7 @@ const expireTime = lobby.creatorLeftAt
         </Box>
       </Box>
 
-      {/* ======= Kopyalandı Snackbar ======= */}
+      {/* ======= Kopyalanan Snackbar ======= */}
       <Snackbar
         open={copySuccess}
         autoHideDuration={3000}
@@ -526,7 +526,7 @@ const expireTime = lobby.creatorLeftAt
       >
         {showJoin && (
           lobby.isPrivate ? (
-            /* 🔒 Şifre Prompt-u */
+            /*  Şifre Prompt-u */
             <Box
               sx={{
                 p: 3,

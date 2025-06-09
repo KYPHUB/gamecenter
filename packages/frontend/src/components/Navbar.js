@@ -60,49 +60,77 @@ function Navbar() {
       <AppBar
         position="sticky"
         sx={{
-          backgroundColor: mode === "dark" ? "#1e1e1e" : "#1565c0",
-          backdropFilter: "blur(6px)",
-          WebkitBackdropFilter: "blur(6px)",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.3)"
+          background: mode === "dark"
+            ? "rgba(20,20,20,0.85)"
+            : "rgba(255,255,255,0.75)",
+          backdropFilter: "blur(12px)",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.25)",
+          color: mode === "dark" ? "#ffffff" : "#1a1a1a",
+          transition: "all 0.3s ease"
         }}
       >
-        <Toolbar sx={{ justifyContent: "space-between" }}>
+        <Toolbar
+          sx={{
+            justifyContent: "space-between",
+            minHeight: 72,
+            px: { xs: 2, sm: 4 }
+          }}
+        >
           <Typography
-            variant="h5"
+            variant="h4"
             component={RouterLink}
             to={user ? "/home" : "/login"}
             sx={{
-              fontFamily: "Orbitron, sans-serif",
-              fontWeight: "bold",
-              color: "white",
-              textDecoration: "none"
+              fontWeight: 700,
+              textDecoration: "none",
+              color: "inherit",
+              letterSpacing: 0.8,
+              textShadow: mode === "dark" ? "0 0 6px #00e5ff44" : "none",
+              '&:hover': { opacity: 0.9 },
+              fontSize: { xs: "1.4rem", sm: "1.8rem" }
             }}
           >
             GameCenter
           </Typography>
 
-          <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 2 }}>
             {user && (
-              <Button color="inherit" component={RouterLink} to="/home">
+              <Button
+                color="inherit"
+                component={RouterLink}
+                to="/home"
+                sx={{
+                  fontWeight: 500,
+                  px: 2.5,
+                  py: 1,
+                  borderRadius: 3,
+                  textTransform: "none",
+                  fontSize: "0.95rem",
+                  '&:hover': { backgroundColor: mode === "dark" ? '#333' : '#eee' }
+                }}
+              >
                 {t("home")}
               </Button>
             )}
 
             <Tooltip title={t("theme")}>
-              <IconButton color="inherit" onClick={toggleTheme}>
+              <IconButton onClick={toggleTheme} sx={{ p: 1.25 }}>
                 {mode === "dark" ? <Brightness7Icon /> : <Brightness4Icon />}
               </IconButton>
             </Tooltip>
 
             <Button
               onClick={toggleLanguage}
-              color="inherit"
               sx={{
-                fontWeight: "bold",
-                border: "1px solid white",
-                borderRadius: "20px",
-                px: 1.5,
-                minWidth: 40
+                fontWeight: 600,
+                border: "1px solid",
+                borderColor: mode === "dark" ? "#aaa" : "#333",
+                borderRadius: 3,
+                px: 2,
+                py: 0.8,
+                textTransform: "none",
+                fontSize: "0.85rem",
+                minWidth: 44
               }}
             >
               {i18n.language === "tr" ? "ENG" : "TR"}
@@ -110,23 +138,40 @@ function Navbar() {
 
             {user ? (
               <>
-                <Typography sx={{ color: "#e0e0e0" }}>👤 {userDisplayName}</Typography>
+                <Typography sx={{ fontSize: "0.95rem", opacity: 0.9 }}>
+                  👤 {userDisplayName}
+                </Typography>
                 <Button
-                  color="inherit"
                   onClick={handleLogout}
                   variant="outlined"
-                  sx={{ borderColor: "#e0e0e0", color: "#e0e0e0" }}
+                  color="inherit"
+                  sx={{
+                    fontWeight: 500,
+                    px: 2.5,
+                    py: 0.8,
+                    borderRadius: 3,
+                    borderColor: mode === "dark" ? "#aaa" : "#555",
+                    textTransform: "none",
+                    fontSize: "0.95rem"
+                  }}
                 >
                   {t("logout")}
                 </Button>
               </>
             ) : (
               <Button
-                color="inherit"
                 component={RouterLink}
                 to="/login"
                 variant="outlined"
-                sx={{ borderColor: "#e0e0e0", color: "#e0e0e0" }}
+                sx={{
+                  fontWeight: 500,
+                  px: 2.5,
+                  py: 0.8,
+                  borderRadius: 3,
+                  borderColor: mode === "dark" ? "#aaa" : "#555",
+                  textTransform: "none",
+                  fontSize: "0.95rem"
+                }}
               >
                 {t("login")}
               </Button>
@@ -141,8 +186,18 @@ function Navbar() {
             <MenuIcon />
           </IconButton>
 
-          <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-            <List sx={{ width: 220 }}>
+          <Drawer
+            anchor="right"
+            open={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            PaperProps={{
+              sx: {
+                width: 240,
+                bgcolor: mode === "dark" ? "#1a1a1a" : "#f9f9f9"
+              }
+            }}
+          >
+            <List>
               {user && (
                 <ListItem button component={RouterLink} to="/home" onClick={() => setDrawerOpen(false)}>
                   <ListItemText primary={t("home")} />

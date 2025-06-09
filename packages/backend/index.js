@@ -83,7 +83,7 @@ const allGames = [
   id: 'tombala',
   name: 'Tombala',
   image: '/images/tombala.jpg',
-  description: 'Klasik tombala oyunu. Şansını dene ve rakiplerinden önce çinko yap!'
+  description: 'Tombala’da her oyuncu 15 sayılı kart alır; torbadan çekilen numaralar tek tek anons edilir ve oyuncular kartlarındaki eşleşen sayıları kapatır. İlk satırını tamamen dolduran “çinko” diyerek ara ödül kazanır, tüm sayıları kapatan ise “tombala” yaparak oyunu bitirir.'
 },
 
   {

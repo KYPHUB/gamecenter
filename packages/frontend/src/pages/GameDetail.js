@@ -432,30 +432,7 @@ return (
               </Stack>
             </Box>
             
-            {game.id === "tombala" && (
-              <Box sx={{ mt: 2, textAlign: 'center' }}>
-                <Button
-                  onClick={() => navigate('/tombala/play')}
-                  variant="contained"
-                  size="large"
-                  sx={{
-                    px: 5,
-                    fontWeight: 'bold',
-                    borderRadius: 10,
-                    background: muiTheme.palette.mode === 'dark'
-                      ? 'linear-gradient(90deg, #00c9ff, #92fe9d)'
-                      : 'linear-gradient(90deg, #2196f3, #90caf9)',
-                    color: '#1c1c1c',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    '&:hover': {
-                      filter: 'brightness(1.1)',
-                    },
-                  }}
-                >
-                  Oynamaya Başla
-                </Button>
-              </Box>
-            )}
+         
 
             {relatedLobbies.length > 0 && (
               <Box

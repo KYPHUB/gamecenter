@@ -68,7 +68,7 @@ const resources = {
       deleteLobby: "Lobiyi Sil",
       editLobby: "Düzenle",
       confirmDeleteLobby: "Lobiyi Sil",
-      deleteConfirmationMessage: "\"{{lobbyName}}\" adlı lobiyi silmek istediğinize emin misiniz?",
+      deleteConfirmationMessage: "  adlı lobiyi silmek istediğinize emin misiniz?",
       // cancel: "İptal", // Yukarıda genel bölümde zaten var
       save: "Kaydet",
       updateSuccess: "Lobi güncellendi",
@@ -143,11 +143,10 @@ gameDescriptions: {
   'night-racer': 'Gece yarışları başladı! Neon ışıklarla dolu pistlerde drift yap...',
   'dragon-flight': 'Ejderhanla gökyüzüne hükmet! Düşman kalelerini yok et...',
   'city-defender': 'Şehrin son savunma hattı sensin. Dronlara karşı savunma kur...',
-  'tower-dash': 'Yüksek bir kulede yukarı doğru zıplayarak ilerle...'
+  'tower-dash': 'Yüksek bir kulede yukarı doğru zıplayarak ilerle...',
+  "tombala": "Her oyuncu 15 sayılı kart alır; çekilen numaralarla eşleşenler kapatılır. İlk sırayı dolduran çinko, tüm kartı tamamlayan tombala yapar.",
+
 }
-
-
-
 
     }
   },
@@ -209,7 +208,7 @@ gameDescriptions: {
       deleteLobby: "Delete Lobby",
       editLobby: "Edit",
       confirmDeleteLobby: "Delete Lobby",
-      deleteConfirmationMessage: "Are you sure you want to delete \"{{lobbyName}}\"?",
+      deleteConfirmationMessage: "Are you sure you want to delete this lobby ?",
       // cancel: "Cancel", // Already in general section
       save: "Save",
       updateSuccess: "Lobby updated",
@@ -285,7 +284,11 @@ gameDescriptions: {
   'night-racer': 'Night races have begun! Drift through neon-lit tracks...',
   'dragon-flight': 'Rule the skies with your dragon! Destroy enemy castles...',
   'city-defender': 'You are the city’s last defense. Set up turrets against drones...',
-  'tower-dash': 'Climb up a tall tower by jumping from platform to platform...'
+  'tower-dash': 'Climb up a tall tower by jumping from platform to platform...',
+    "tombala": "Each player receives a card with 15 numbers. Called numbers are marked; first full row is a 'çinko', a full card is 'tombala'."
+
+
+
 }
 
 
@@ -298,8 +301,8 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: "tr", // veya 'en' hangisini varsayılan istiyorsanız
-    debug: process.env.NODE_ENV === 'development', // Geliştirme ortamında debug'ı açmak iyi olabilir
+    fallbackLng: "tr", 
+    debug: process.env.NODE_ENV === 'development', 
     interpolation: {
       escapeValue: false,
     },

@@ -78,7 +78,7 @@ export default function Lobby() {
   const handleUpdate = (l) => setLobbies((p) => p.map((x) => (x.id === l.id ? l : x)));
   const handleDelete = (id) => setLobbies((p) => p.filter((x) => x.id !== id));
 
-  socket.on('lobby:create', handleCreate);
+  socket.on('lobby:create', handleCreate);  
   socket.on('lobby:update', handleUpdate);
   socket.on('lobby:delete', handleDelete);
 
@@ -178,7 +178,7 @@ export default function Lobby() {
       };
 
       const { data } = await axios.post('/api/lobbies', body, { withCredentials: true });
-      setLobbies(prev => [data.lobby, ...prev]);
+      
 
       // formu sıfırla
       setLobbyName('');
@@ -277,7 +277,7 @@ return (
       p: { xs: 2, md: 4 },
       background: muiTheme.palette.mode === "dark"
         ? "linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #0f2027)"
-        : "linear-gradient(-45deg, #e3f2fd, #e0f7fa, #ffffff, #e3f2fd)",
+        : "linear-gradient(-45deg,rgb(108, 190, 248),rgb(15, 140, 156),rgb(23, 104, 110), #e3f2fd)",
       backgroundSize: "400% 400%",
       animation: "gradientMove 18s ease infinite",
       '@keyframes gradientMove': {

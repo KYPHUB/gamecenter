@@ -1,30 +1,63 @@
-# GameCenter
+# 🎮 GameCenter
 
-GameCenter, farklı oyunlara özel lobiler oluşturabileceğiniz, oyun detaylarını görebileceğiniz ve giriş sistemi bulunan web tabanlı bir platformdur.
+GameCenter, çok oyunculu web tabanlı oyunlar oynayabileceğiniz, her oyuna özel lobi oluşturabileceğiniz ve kullanıcı oturumu ile yönetilen bir platformdur. Proje, gerçek zamanlı etkileşim (WebSocket), çoklu dil desteği, tema geçişi ve modüler oyun yapısı gibi birçok gelişmiş özelliğe sahiptir.
 
-## Özellikler
+## 🚀 Özellikler
 
-- Kullanıcı giriş sistemi
-- Ana sayfada listelenen oyunlar (görseller + adlar)
-- Her oyun için ayrı detay sayfası (görsel + açıklama)
-- "Oyna" butonu ile ilgili oyun lobisine yönlendirme
-- Lobi oluşturma ve mevcut lobiye katılma
-- Oluşturan ve katılan oyuncuların listesi
+* Kullanıcı e-posta ve şifre ile giriş yapabilir
+* “Beni hatırla” ve “Şifremi unuttum” gibi giriş deneyimi özellikleri
+* Ana sayfada listelenen oyunlar (görsel + ad)
+* Her oyun için detay sayfası ve “Nasıl oynanır” açıklamaları
+* Lobi oluşturma (etkinlik, şifreli, normal) ve mevcut lobiye katılma
+* Lobide katılımcı listesi ve kurucu kontrolü
+* Tombala oyunu: Gerçek zamanlı, çok oyunculu, WebSocket destekli
+* Koyu/açık tema ve çoklu dil (Türkçe – İngilizce) desteği
+* Responsive tasarım ile farklı cihazlarda uyumlu görünüm
 
-## Kullanılan Teknolojiler
+## 🛠️ Kullanılan Teknolojiler
 
-- React (Frontend)
-- Node.js + Express (Backend)
-- Session tabanlı kimlik doğrulama
-- MUI (Material UI) tasarım bileşenleri
+### Frontend
 
-## Geliştiriciler
+* React 18 + Context API
+* Material UI v6
+* react-router-dom
+* react-i18next
+* Socket.IO client
 
-- Kerem Yunus Parlakyiğit
+### Backend
 
-## Kurulum
+* Node.js v22 + Express v5
+* express-session + memorystore
+* Socket.IO
+* SHA-256 hash ile kullanıcı doğrulama
+* Lerna monorepo yapısı (oyunlar ayrı paket olarak tanımlı)
 
-1. `npm install` ile bağımlılıkları yükleyin
-2. `npm start` ile frontend'i, `node backend.js` ile backend'i çalıştırın
-3. Uygulamaya [http://localhost:3000](http://localhost:3000) üzerinden erişin
+## 👨‍💻 Geliştirici
 
+Kerem Yunus Parlakyiğit
+Sakarya Üniversitesi – Bilgisayar Mühendisliği
+
+## ⚙️ Kurulum ve Çalıştırma
+
+1. Projeyi bir klasöre indirin (örnek: `Platform/`, tombala-game klasörü de bu klasörün içinde olmalı)
+2. Terminali proje kök dizinine açın
+
+### Bağımlılıkları yüklemek için
+
+npm install
+
+### Frontend’i başlatmak için
+
+npm run start --workspace gamecenter/packages/frontend
+
+### Backend’i başlatmak için
+
+npm run start --workspace gamecenter/packages/backend
+
+### Tombala oyununu derlemek için
+
+npm run build --workspace tombala-game
+
+### Uygulamayı açmak için
+
+Tarayıcıdan [http://localhost:3000](http://localhost:3000) adresine gidin.

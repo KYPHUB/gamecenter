@@ -61,3 +61,19 @@ npm run build --workspace tombala-game
 ### Uygulamayı açmak için
 
 Tarayıcıdan [http://localhost:3000](http://localhost:3000) adresine gidin.
+
+## 🧪 Test Girişi (Dummy Kullanıcılar)
+* Test amaçlı kullanabileceğiniz hazır kullanıcılar:
+
+* Kullanıcı 1
+
+* E-posta: test@test.com
+
+* Şifre: 06Sh1854
+
+* Kullanıcı 2
+
+* E-posta: admin@test.com
+
+* Şifre: admin123
+
